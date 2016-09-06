@@ -1,0 +1,1021 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+      .image-50 img {
+  		width: 50%;
+  		height: 50%;
+	  }
+
+	  .image-35 img {
+  		width: 35%;
+  		height: 35%;
+	  }
+
+	  .green {
+	  	color: green;
+	  }
+
+	  .image-45 img {
+  		width: 45%;
+  		height: 45%;
+	  }
+
+	  .image-25 img {
+  		width: 25%;
+  		height: 25%;
+	  }
+
+	   /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Making computer music with Haskell
+
+	Workshop, by Anton Kholomiov. HaL 2016
+
+---
+
+class: center, middle
+
+# Welcome to the text-based computer music production
+
+---
+## Csound-expression 
+
+Haskell framework for computer music production
+
+~~~haskell
+> cabal install csound-expression
+~~~
+
+Other goodies based on CE:
+
+### Sampler
+
+~~~haskell
+> cabal install csound-sampler
+~~~
+
+### Catalog of beautiful instruments
+
+~~~haskell
+> cabal install csound-catalog
+~~~
+
+---
+
+.left-column[
+## Hello, World!
+]
+
+.right-column[
+~~~Haskell
+ghci
+> :m +Csound.Base
+> dac (osc 440)
+~~~
+
+.image-45[.center[![Pure sine wave](pictures/Osc.jpg)]]
+
+Dac sends the audio signal to speakers
+
+~~~haskell
+dac :: Audible a => a -> IO ()
+~~~
+
+Osc converts frequency to pure sine wave signal
+
+~~~haskell
+osc :: Sig -> Sig
+~~~
+]
+
+---
+
+.left-column[
+## .green[Hello, Fancy World!]
+]
+
+.right-column[
+~~~Haskell
+ghci
+> :m +Csound.Base
+> dac (testDrone 220)
+~~~
+
+Try out: `testDrone2`, `testDrone3`, `testDrone4`
+
+It can be useful as a Pitch reference for strings or wood-wind players.
+
+### But frequencies are for enginieers notes are for musicians.
+]
+
+---
+
+## How to specify notes
+
+`cpspch` -- converts numeric pitchclass to frequency:
+
+![Pitch classes](pictures/cpspch.png)
+
+~~~haskell
+> dac $ testDrone $ cpspch 6.02
+~~~
+
+---
+
+class: center, middle
+
+## Let's practice in D minor in Haskell way
+
+~~~haskell
+--                                         D     A     D      F 
+
+> dac $ mean $ fmap (testDrone . cpspch) [6.02, 6.09, 7.02, 7.05]
+~~~
+
+
+---
+
+class: middle
+
+## What about metronome?
+
+~~~haskell
+ticks :: Int -> Sig -> Sig
+ticks measure  bpm  = asignal
+~~~
+
+Let's practice:
+
+~~~haskell
+> dac $ ticks 4 135
+~~~
+
+---
+
+class: middle
+
+## For rhythm addicted!
+
+But I'm eastern musician and whant my complicated beat patterns: 3-2-4-3 or 2-3-4-5
+
+~~~haskell
+nticks :: [Int] -> Sig -> Sig
+nticks measureList bpm  = asignal
+~~~
+
+Viola!
+
+~~~haskell
+> dac $ nticks [3,2,3,4] 135
+
+> dac $ nticks [2, 3, 4, 5] 140
+~~~
+
+There are variations in timbre: ticks2, ticks3, ticks4
+
+
+---
+
+class: middle
+
+## Let's practice drone and rhythm
+
+~~~Haskell
+> let drone = mean $ fmap (testDrone . cpspch) [6.02, 6.09, 7.02, 7.05]
+
+:t SE (Sig, Sig)
+
+> let rhytm = nticks [3, 3, 2] 120
+
+:t Sig
+
+> dac $ sum [drone, return $ fromMono rhythm]
+~~~
+
+---
+
+class: middle
+
+## Volume control
+
+We can adjust volume of all audible values with function `mul`:
+
+~~~haskell
+> mul :: Audible a => Sig -> a -> a
+~~~
+
+Let's adjust the volume:
+
+
+~~~Haskell
+> dac $ sum [mul 0.6 drone, return $ fromMono $ mul 1.3 rhythm]
+~~~
+
+---
+
+class: middle
+
+## How about some cool Plug-and-play synthesizers
+
+Many beautiful instruments are ready to use (package csound-catalog):
+
+~~~haskell
+> :m +Csound.Patch
+
+> dac $ atMidi toneWheelOrgan
+
+> dac $ mul 0.7 $ atMidi dreamPad
+
+> dac $ mul 0.5 $ atMidi $ vibhu 65
+~~~
+
+With `dac` we listen for messages from the real MIDI-device. 
+If you don't have the MIDI-keyboard try out `vdac`. It creates
+a virtual keyboard to test the synth.
+
+`vdac` creates virtual MIDI-keyboard
+
+~~~haskell
+vdac :: Audible a => a -> IO ()
+~~~
+
+~~~haskell
+> vdac $ mul 0.7 $ atMidi dreamPad
+~~~
+
+---
+
+class: middle
+
+## Try out the synthesizers
+
+~~~haskell
+> vdac $ mul 0.5 $ atMidi vibraphone1
+~~~
+
+There are tons of instruments:
+
+-----------------------------
+
+~~~
+cathedralOrgan      dreamPad		  noiz               whaleSongPad
+
+vibraphone2         xylophone         simpleMarimba      bassClarinet
+
+razorLead           fmDroneMedium     hammondOrgan       overtonePad
+
+choirA              scrapeDahina      pwEnsemble         hulusi
+
+epiano1             chalandiPlates    banyan             nightPad		
+					
+~~~
+
+--------------------------------------
+
+.center[.... many more ....]
+
+---
+
+class: middle
+
+## Beat making
+
+Let's substitute the metronome with drums! 
+
+We have a collection of predefined drums. Right now there are three collections 
+and you can load your own samples. 
+
+~~~
+> :m +Csound.Catalog.Drum.Tr808
+~~~
+
+Let's start with three sounds:
+
+~~~
+bd    - base drum           sn - snare drum         chh - closed high hat
+~~~
+
+Let's see how they sound:
+
+
+~~~
+> dac bd
+
+> dac sn
+
+> dac chh
+~~~
+
+---
+
+class: middle
+
+## Creating patterns 
+
+We use the sampler `Csound.Sam` to create simple patterns. 
+
+~~~
+> :m +Csound.Sam
+~~~
+
+### pat -- euclidean beats
+
+Let's try:
+
+~~~haskell
+> dac $ pat [3, 3, 2] bd
+~~~
+
+### del - delay a pattern by number of beats
+
+Let's add a snare drum:
+
+~~~haskell
+> dac $ sum [         pat [3, 3, 2] bd
+            , del 2 $ pat [4]       sn ]
+~~~
+
+---
+
+class: middle
+
+## pat' - making beats with accents
+
+Let's add a high-hat with accents:
+
+~~~haskell
+> dac $ pat' [1, 0.5, 0.2, 0.1] [1] chh
+~~~
+
+Let's play them together:
+
+~~~haskell
+> dac $ sum [         pat [3, 3, 2] bd
+            , del 2 $ pat [4]       sn
+            ,         pat' [1, 0.5, 0.2, 0.1] [1] chh ]
+~~~
+
+---
+
+class: middle
+
+## Odd kicks
+
+Let's add some toms that happen at odd places:
+
+~~~haskell
+> let drums = sum   [          pat [3, 3, 2] bd
+                    , del 2  $ pat [4]       sn
+                    ,          pat' [1, 0.5, 0.2, 0.1] [1] chh 
+
+                    , del 3  $ pat [5, 11, 7, 4] mtom
+                    ,          pat [4, 7, 1, 9]  htom
+                    , del 7  $ pat [3, 7, 6] ltom
+
+                    , del 16 $ pat [15, 2, 3] rim
+                    ]
+> dac drums
+~~~
+
+---
+
+class: middle
+
+## Time to try out other sounds:
+
+Shortcuts to remember:
+
+~~~
+bd, bd2 -  base drums                 htom, mtom, ltom   - high middle low toms
+
+sn      -  snare                      cl                 - claves 
+
+chh     -  closed high-hat            rim                - rim-shot
+
+ohh     -  open high-hat              mar                - maracas
+
+cym     - cymbal                      hcon, mcon, lcon   - high, middle, low conga
+~~~
+
+---
+
+### `lim` - limit the duration of the sample 
+
+~~~haskell
+lim :: D -> Sam -> Sam
+~~~
+
+### `mel` - play one pattern after another
+
+~~~haskell
+mel :: [Sam] -> Sam
+~~~
+
+### `rest` -- pause for some duration
+
+~~~haskell 
+rest :: D -> Sam
+~~~
+
+Let's silence out some high-hats:
+
+~~~haskell
+> let hhats = mel [lim 8 $ pat' [1, 0.5, 0.25, 0.1] [1] chh, rest 8] 
+
+> dac $ hhats
+~~~
+
+---
+
+## Transformation of audio signals
+
+We can transform audio entities with `at` and `mixAt` functions.
+Simplified (conceptual) signature:
+
+~~~haskell
+at :: Audio a => (Sig -> Sig) -> a -> a
+~~~
+
+The `mixAt` takes dry/wet ratio as the first argument.
+0 -- only dry signal, 1 -- only wet and the mixture inbetween. 
+
+~~~haskell
+mixAt :: Audio a => Sig -> (Sig -> Sig) -> a -> a
+~~~
+
+Let's add a bit of reverb to the drums:
+
+~~~haskell
+> dac $ mixAt 0.2 smallRoom2 drums
+~~~
+
+---
+
+class: middle
+
+## Trick: filtering with LFO 
+
+Let's make our LFO a bit more alive. We are going to add filtering 
+with center frequency modulated with low frequency oscillator (LFO):
+
+~~~haskell
+> let filteredHats = at (mlp (500 + 2500 * uosc 0.1) 0.15) hhats
+
+> dac $ filteredHats
+~~~
+
+The functions:
+
+Moog low-pass filter
+
+~~~haskell
+mlp :: Sig -> Sig -> Sig -> Sig
+mlp centerFrequency resonance asig = ...
+~~~
+
+Unipolar pure sine wave:
+
+~~~haskell
+uosc :: Sig -> Sig
+uosc frequency = ...
+~~~
+
+---
+
+class: middle
+
+## How to mix our drone with drums
+
+~~~haskell
+drone :: SE (Sig, Sig)
+
+drums :: Sam
+~~~
+
+### Sig to Sam
+
+We can lift the drone to `Sam`:
+
+~~~haskell
+toSam :: ToSam a => a -> Sam            -- infinite
+
+limSam :: ToSam a => D -> a -> Sam      -- finite
+~~~
+
+### Sam to Sig
+
+We can render the `Sam` to `(Sig, Sig)`:
+
+~~~haskell
+renderSam :: D -> Sam -> SE (Sig, Sig)
+renderSam bpm sample = ...
+~~~
+
+---
+
+class: middle
+
+## Let's mix it all
+
+~~~haskell
+> let drones = toSam $ mean $ fmap (atNote . dreamPad) [
+        (0.5, cpspch 6.02), (0.4, cpspch 6.09), (0.3, cpspch 5.06)]
+
+> let drums = sum [...]
+
+> let player = toSam $ atMidi bassClarinet
+
+> let performance = sum [mul 0.3 drones, mul 1.2 drums, mul 1.3 player]
+
+> vdac performance
+~~~
+
+---
+
+class: middle
+
+## Let's record our performance live
+
+We can record our song live with function:
+
+~~~haskell
+dumpWav :: String -> (Sig, Sig) -> SE (Sig, Sig)
+~~~
+
+Let's apply it:
+
+~~~haskell
+> vdac $ at (dumpWav "song2.wav") performance
+~~~
+
+---
+
+class: middle
+
+## Let's record our performance offline
+
+If we don't have any live parts we can record off-line. 
+
+It can be much faster. Or contain some heavy weight audio processing
+that can not be performed in real-time:
+
+~~~haskell
+writeSnd :: String -> (Sig, Sig) -> IO ()
+~~~
+
+We can use it like this:
+
+~~~haskell
+> writeSnd "song2.wav" $ renderSam (120 * 4) performance
+~~~
+
+Note: the `dac` becomes `writeSnd` since we don't want to hear the output in real-time.
+
+---
+
+class: middle
+
+## Using UIs to control the volumes
+
+The UI is a pair of `(appearance, behavior)`. Let's study applicative UIs:
+
+We have widgets that are sources of control signals. Example: unipolar knob:
+
+~~~
+uknob :: D -> Source Sig
+uknob initValue
+~~~
+
+---
+
+class: middle
+
+## Applicative style UIs
+
+We can combine the widgets and control signals with functions:
+
+Simple mapping:
+
+~~~haskell
+lift1 :: (a -> b) -> Source a -> Source b
+~~~
+
+Zip together with `f` and stack widgets horizontally or vertically:
+
+
+~~~haskell
+hlift2, vlift2 :: (a -> b -> c) -> Source a -> Source b -> Source c
+
+hlift3, vlift3 :: (a -> b -> c -> d) -> Source a -> Source b -> Source c -> Source d
+
+...
+~~~
+
+Grouping lists of widgets:
+
+~~~haskell
+hlifts, vlifts :: ([a] -> b) -> Source [a] -> Source b
+~~~
+
+---
+
+class: middle
+
+### Let's add a simple mixer to control the volumes:
+
+our individual parts:
+
+~~~haskell
+let drones = ...
+let drums  = ...
+let player = ...
+~~~
+
+mixing parts together:
+
+~~~haskell
+let mixing [total, v1, v2, v3] = mul total $ sum $ 
+    zipWith mul [v1, v2, v3] [drones, drums, player]
+~~~
+
+Four knobs to control the volumes:
+
+~~~haskell
+dac $ hlifts mixing $ fmap uknob $ replicate 4 [0.5]
+~~~
+
+---
+
+.left-column[
+## Basic types
+]
+
+.right-column[
+### Signals: `Sig`
+
+Stream of floats.
+
+### Constants: `D`
+
+Constant numbers. Numbers for instant messages (notes, key-presses)
+
+### 1D arrays: `Tab`
+
+1D arrays for storing waveshapes, audio files.
+
+### Side effects: `SE`
+
+It's `IO`-monad for our library.
+]
+
+---
+
+## Signals: Sig
+
+Stream of floats that represent audio signal or control signal.
+
+
+* Audio waves:
+
+~~~haskell
+> dac $ osc 220
+~~~
+
+* Control signals (envelopes, LFOs)
+
+~~~haskell
+> dac $ linseg [0, 0.5, 1, 2.5, 0] * osc 220
+~~~
+
+* Can be used like numbers (support basic arithmetics):
+
+~~~haskell
+> dac $ osc $ 220 + linseg [0, 2, 220, 4, 0]
+~~~
+
+---
+
+## Constant numbers: `D`
+
+Constant floats. Used for initial arguments that can not change:
+
+Example: Attack Decay Sustain release envelope:
+
+~~~haskell
+leg :: D -> D -> D -> D -> Sig
+leg attack decay sustain release = envelope
+~~~
+
+Shaping the sine amplitude:
+
+~~~haskell
+dac $ leg 0.3 0.5 0.3 0.2 * osc 220
+~~~
+
+---
+
+# Constant numbers: `D` as notes
+
+Used for representing a note data (velocity, frequency). 
+
+~~~haskell
+instrument :: (D, D) -> Sig
+instrument (amplitude, frequency) = sig amplitude * osc (sig frequency)
+~~~
+
+Important function: `sig` converts constants to signals tt hold the value.
+
+~~~haskell
+> sig :: D -> Sig
+~~~
+
+---
+
+## 1D arrays for waveshapes: `Tab`  
+
+
+Most frequently we use `Tab` to hold wave shapes:
+
+### Harmonics:
+
+~~~haskell
+dac $ oscBy (sines [1, 0, 0.5, 0.25, 0.1]) 220
+~~~
+
+### Read audio file to table:
+
+~~~haskell
+let file = wavLeft "file.wav"
+~~~
+
+---
+
+## Side effects
+
+Random values, procedures, UI-widgets,  reading user inputs, creation of midi instruments
+
+~~~haskell
+class Monad SE where
+~~~
+
+White and pink noise:
+
+~~~haskell
+white, pink :: SE Sig
+~~~
+
+
+### Example 
+
+Filtered white noise:
+
+~~~
+> dac $ fmap (mlp (2500 * uosc 0.1 * uosc 2) 0.2) white
+~~~
+
+`mlp` -- emulation of moog low-pass filter.
+
+---
+
+.left-column[
+## Sound design basics
+]
+
+.right-column[
+### Audio waves:
+
+Pure sine, square, sawtooth, triangle:
+
+~~~haskell
+osc, sqr, saw, tri :: Sig -> Sig
+
+osc frequency = wave
+~~~
+
+### Filters:
+
+Moog low pass filter:
+
+~~~haskell
+mlp :: Sig -> Sig -> Sig -> Sig
+mlp cutoffFrequency resonance asignal = ..
+~~~
+]
+
+---
+
+.left-column[
+## Sound design basics
+]
+
+.right-column[
+## Envelope generators
+
+ADSR or attack, decay, sustain release:
+
+~~~haskell
+leg, xeg :: D -> D -> D -> D -> Sig
+
+leg att dec sust rel = envelope
+~~~
+
+* `leg` - Linear Envelope Generator
+
+* `xeg` - eXponential Envelope Generator
+]
+
+
+---
+
+.left-column[
+## Sound design basics
+]
+
+.right-column[
+## Low frequency oscillators:
+
+Audio waves with low frequencies (0 to 20 Hz).
+
+Audio waves with low frequencies (0 to 20 Hz).
+
+Bipolar: range from -1 to 1: `osc`, `sqr`, `saw`, `tri`
+
+Unipolar: range from 0 to 1: `uosc`, `usqr`, `usaw`, `utri`
+
+]
+
+---
+
+.left-column[
+## Sound design basics
+]
+
+.right-column[
+
+## Examples:
+
+Filter with LFO
+
+~~~haskell
+> dac $ mlp (200 + 1500 * uosc 2) 0.2 $ saw 220
+~~~
+
+Envelope for filter and amplitude:
+
+~~~haskell
+> let env = leg 0.3 0.5 0.4 1.2
+> dac $ env * mlp (200 + 1500 * env) 0.2 $ saw 220
+~~~
+]
+
+---
+
+.left-column[
+## Sound design basics
+]
+
+.right-column[
+## Fancy envelopes:
+
+~~~haskell
+constSeq :: [Sig] -> Sig -> Sig
+~~~
+
+picture
+
+~~~haskell
+sqrSeq :: [Sig] -> Sig -> Sig
+~~~
+
+~~~haskell
+sawSeq :: [Sig] -> Sig -> Sig
+~~~
+]
+
+---
+
+.left-column[
+## Sound design basics
+]
+
+.right-column[
+## Arpeggiator
+
+~~~ haskell
+> let cps = costSeq (fmap (220 *) [1, 9/8, 5/4, 3/2]) 4
+
+> dac $ mlp (2500 * uosc 0.1) 0.1 $ saw cps
+~~~
+]
+
+Let's add some fancy pulse:
+
+~~~haskell
+> let res = mlp (2500 * uosc 0.1) 0.1 $ saw cps
+
+> let pulsar = sqrSeq [1, 0.5, 0.25, 0.8, 0.4, 0.2, 0.9, 0.4] 8
+
+> dac $ pulsar * res
+~~~
+
+---
+
+.left-column[
+## Useful generic functions
+]
+
+.right-column[
+### `mul` - volume control
+
+Scales anything that contains signals with a signal.
+Useful for generic volume control:
+
+~~~haskell
+> dac $ mul 0.5 $ sqr 220                -- Sig
+	
+> dac $ mul 0.25 $ pink                  -- SE Sig
+
+> dac $ mul 0.4 (tri 220, tri 224)       -- (Sig, Sig)
+
+> vdac $ atMidi $ mul 0.2 flute          -- Patch (Sig, Sig) 
+
+> dac $ mul 0.4 $ loop $ wav "beat.wav"  -- Sam
+~~~
+]
+
+---
+
+.left-column[
+## Useful generic functions
+]
+
+.right-column[
+
+### `at` - signal transformation
+
+`At` transformes anything that contains signal with `Sig -> Sig` like function:
+
+~~~haskell
+> let f = mlp 1500 0.1
+
+> dac $ at f $ sqr 220
+
+> dac $ at f $ pink
+~~~
+
+### `mixAt` - signal transformation with dry/wet mix
+
+~~~haskell
+> dac $ mixAt 0.25 largeHall2 $ fromMono $ tri 110
+~~~
+]
+
+
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
