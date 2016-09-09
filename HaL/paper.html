@@ -1,0 +1,323 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+    .image-50 img {
+  		width: 50%;
+  		height: 50%;
+	  }
+
+   .image-80 img {
+      width: 80%;
+      height: 80%;
+    }
+
+      .image-treasure img {
+      width: 90%;
+      height: 90%;
+    }
+
+	  .image-35 img {
+  		width: 35%;
+  		height: 35%;
+	  }
+
+	  .green {
+	  	color: green;
+	  }
+
+	  .image-45 img {
+  		width: 45%;
+  		height: 45%;
+	  }
+
+	  .image-25 img {
+  		width: 25%;
+  		height: 25%;
+	  }
+
+    .hide {
+      visibility: hidden;
+    }
+
+	   /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Csound-expression Haskell framework for computer music
+
+	Talk, by Anton Kholomiov. HaL 2016
+
+
+---
+
+class: center, middle
+
+## The treasure!
+
+.image-80[![Treasure](pictures/fractal3.png)]
+
+---
+
+class: middle
+
+# Csound
+
+audio programming language
+
+* it's free
+
+* 30 years of research in the firelds of sound design
+
+* has many built in auio units
+
+* good for real-time
+
+* has active and supporting comunity
+
+* can be embedded in all sorts of environments (PC, OSX, iOS, Linux, Android, Raspberry Pi, Web Browser)
+
+---
+
+class: middle
+
+# Downside
+
+* It has very old syntax.
+
+*  Imperative down to the bones
+
+.center[.image-50[![Cables](pictures/cables.gif)]]
+
+---
+
+class: middle
+
+## Imperative down to the bones
+
+* no grouping data structures
+
+* no modules. 
+
+* no packages
+
+* use globals everywhere
+
+* no higher order functions
+
+* no interactive mode
+
+
+---
+
+class: middle
+
+## Haskell at rescue: Csound-expression
+
+* Csound code generator
+
+* It defines functional model to represent computer music
+
+* We can use Csound audio units with FP tools for code organization.
+
+~~~haskell
+> cabal install csound-expression
+~~~
+
+---
+
+class: middle, center
+
+# Key idea!
+
+## Modularity is the main design priniple
+
+Everything is an expression
+
+---
+
+
+class: middle
+
+# Modularity
+
+### Obstacle 
+
+If your language forces you to use global identifiers
+
+### Solution
+
+Allocate the names automatically behind the scenes
+
+---
+
+class: middle
+
+# Modularity
+
+Every concept  can be given name or assigned to a variable
+
+### Example: Instrument application to scores
+
+Instrument is a function:
+
+~~~haskell
+instr :: Note -> Sig
+~~~
+
+Scores is a container of notes:
+
+~~~haskell
+scores :: Sco Note
+~~~
+
+We can apply the instrument to scores and it produces the signal again
+
+
+~~~haskell
+applyInstr instr scores :: Sig
+~~~
+
+---
+
+class: middle
+
+### Example: Instrument application to event stream
+
+Instrument is a function:
+
+~~~haskell
+instr :: Note -> Sig
+~~~
+
+Event stream is the sequence of values that happen at some time:
+
+~~~haskell
+events :: Evt (Sco Note)
+~~~
+
+We can apply the instrument to events and it produces the signal again
+
+~~~haskell
+schedule instr events :: Sig
+~~~
+
+---
+
+class: middle
+
+## Example: effect application
+
+An effect is a function that transforms signals:
+
+~~~haskell
+fx :: Sig -> Sig
+~~~
+
+And to apply effect we can just apply function to the value:
+
+~~~haskell
+addReverb (sched instr events) :: Sig
+~~~
+
+---
+
+class: middle
+
+## We can decompose everything to simple parts
+
+.center[Scopre API]
+
+.center[.image-85[![Sco API](pictures/sco-api.png)]]
+
+---
+
+## API for scores:
+
+* Primitives. Make single score with single note and make a pause:
+
+~~~haskell
+temp :: a -> Sco a
+
+rest :: Duration -> Sco a
+~~~
+
+* Delay scores and stretch them in duration:
+
+~~~haskell
+del, str :: Duration -> Sco a -> Sco a
+~~~
+
+* Harmonical composition (play at the same time) and melodical composition (play one after another):
+
+~~~haskell
+har, mel :: [Sco a] -> Sco a
+~~~
+
+* Repeat N-times:
+
+~~~haskell
+loopBy :: Int -> Sco a -> Sco a
+~~~
+
+---
+
+
+
+---
+
+class: middle
+
+# Thanks!
+
+
+        github: anton-k, 
+
+        email: anton.kholomiov at gmail.com
+---
+
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
