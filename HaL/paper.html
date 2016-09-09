@@ -298,7 +298,44 @@ loopBy :: Int -> Sco a -> Sco a
 
 ---
 
+class: middle
 
+Side-effects are performed in Haskell way with IO-like monad
+
+
+---
+
+## FRP: modular approach to events
+
+~~~haskell
+newtype Evt a = Evt { runEvt :: a -> SE () }
+~~~
+
+We have instance for `Functor` and `Monoid` and there are many seful function that are defined on event streams:
+
+Filtering:
+
+~~~haskell
+filterE :: (a -> BoolD) -> Evt a -> Evt a
+~~~
+
+Metronome:
+
+~~~haskell
+metro :: Sig -> Evt Unit
+~~~
+
+Cycle over given values:
+
+~~~haskell
+cycleE :: (Tuple a, Arg a) => [a] -> Evt b -> Evt a
+~~~
+
+Choose events at random:
+
+~~~haskell
+oneOf :: (Tuple a, Arg a) => [a] -> Evt b -> Evt a
+~~~
 
 ---
 
