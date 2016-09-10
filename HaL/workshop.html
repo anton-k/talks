@@ -74,7 +74,9 @@ class: center, middle
 
 class: center, middle
 
-# Welcome to the text-based computer music production
+# Welcome to text-based 
+
+# computer music production
 
 ---
 ## Csound-expression 
@@ -156,19 +158,19 @@ It can be useful as a Pitch reference for strings or wood-wind players.
 ![Pitch classes](pictures/cpspch.png)
 
 ~~~haskell
-> dac $ testDrone $ cpspch 6.02
+> dac $ testDrone $ cpspch 7.02
 ~~~
 
 ---
 
 class: center, middle
 
-## Let's practice in D minor in Haskell way
+## Let's practice in D major in Haskell way
 
 ~~~haskell
---                                         D     A     D      F 
+--                                         D     A     D      F# 
 
-> dac $ mean $ fmap (testDrone . cpspch) [6.02, 6.09, 7.02, 7.05]
+> dac $ mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
 ~~~
 
 
@@ -220,7 +222,7 @@ class: middle
 ## Let's practice drone and rhythm
 
 ~~~Haskell
-> let drone = mean $ fmap (testDrone . cpspch) [6.02, 6.09, 7.02, 7.05]
+> let drone = mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
 
 :t SE (Sig, Sig)
 
@@ -263,9 +265,9 @@ Many beautiful instruments are ready to use (package csound-catalog):
 
 > dac $ atMidi toneWheelOrgan
 
-> dac $ mul 0.7 $ atMidi dreamPad
+> dac $ mul 0.45 $ atMidi dreamPad
 
-> dac $ mul 0.5 $ atMidi $ vibhu 65
+> dac $ mul 0.45 $ atMidi $ vibhu 65
 ~~~
 
 With `dac` we listen for messages from the real MIDI-device. 
@@ -289,7 +291,7 @@ class: middle
 ## Try out the synthesizers
 
 ~~~haskell
-> vdac $ mul 0.5 $ atMidi vibraphone1
+> vdac $ mul 0.35 $ atMidi vibraphone1
 ~~~
 
 There are tons of instruments (see `Csound.Patch` from `csound-catalog` package for complete list):
@@ -378,18 +380,31 @@ Let's add a snare drum:
 
 class: middle
 
+### str - change speed
+
+~~~haskell
+> dac $ str 0.5 $ 
+        sum [         pat [3, 3, 2] bd
+            , del 2 $ pat [4]       sn ]
+~~~
+
+---
+
+class: middle
+
 ## pat' - making beats with accents
 
 Let's add a high-hat with accents:
 
 ~~~haskell
-> dac $ pat' [1, 0.5, 0.2, 0.1] [1] chh
+> dac $ str 0.5 $ pat' [1, 0.5, 0.2, 0.1] [1] chh
 ~~~
 
 Let's play them together:
 
 ~~~haskell
-> dac $ sum [         pat [3, 3, 2] bd
+> dac $ str 0.5 $ 
+        sum [         pat [3, 3, 2] bd
             , del 2 $ pat [4]       sn
             ,         pat' [1, 0.5, 0.2, 0.1] [1] chh ]
 ~~~
@@ -415,6 +430,29 @@ Let's add some toms that happen at odd places:
                     ]
 > dac drums
 ~~~
+
+---
+
+class: middle
+
+## Odd kicks: Adjust volume
+
+
+~~~haskell
+> let drums = sum   [          pat [3, 3, 2] bd
+                    , del 2  $ pat [4]       sn
+                    ,          pat' [1, 0.5, 0.2, 0.1] [1] chh 
+
+                    mul 0.25 $ sum [
+                      , del 3  $ pat [5, 11, 7, 4] mtom
+                      ,          pat [4, 7, 1, 9]  htom
+                      , del 7  $ pat [3, 7, 6] ltom]
+
+                    , del 16 $ pat [15, 2, 3] rim
+                    ]
+> dac drums
+~~~
+
 
 ---
 
@@ -459,7 +497,7 @@ rest :: D -> Sam
 Let's silence out some high-hats:
 
 ~~~haskell
-> let hhats = mel [lim 8 $ pat' [1, 0.5, 0.25, 0.1] [1] chh, rest 8] 
+> let hhats = loop $ mel [lim 8 $ pat' [1, 0.5, 0.25, 0.1] [1] chh, rest 8] 
 
 > dac $ hhats
 ~~~
@@ -498,7 +536,7 @@ Let's make our LFO a bit more alive. We are going to add filtering
 with center frequency modulated with low frequency oscillator (LFO):
 
 ~~~haskell
-> let filteredHats = at (mlp (500 + 2500 * uosc 0.1) 0.15) hhats
+> let filteredHats = mul 8 $ at (mlp (500 + 2500 * uosc 0.1) 0.15) hhats
 
 > dac $ filteredHats
 ~~~
@@ -557,14 +595,13 @@ class: middle
 ## Let's mix it all
 
 ~~~haskell
-> let drones = toSam $ mean $ fmap (atNote . dreamPad) [
-        (0.5, cpspch 6.02), (0.4, cpspch 6.09), (0.3, cpspch 5.06)]
+> let drone = toSam $ mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
 
 > let drums = sum [...]
 
 > let player = toSam $ atMidi bassClarinet
 
-> let performance = sum [mul 0.3 drones, mul 1.2 drums, mul 1.3 player]
+> let performance = sum [mul 0.74 drone, mul 1.2 drums, mul 0.5 player]
 
 > vdac performance
 ~~~
@@ -591,6 +628,58 @@ Let's apply it:
 
 class: middle
 
+## Let's play it back
+
+Normal playback:
+
+~~~haskell
+> dac $ loopWav 1 "song2.wav"
+~~~
+
+Let's play in reverse:
+
+~~~haskell
+> dac $ loopWav (-1) "song2.wav"
+~~~
+
+Let's go nuts:
+
+~~~haskell
+> dac $ loopWav (constSeq [1, 1, -1, 2, 1] 1) "song2.wav"
+~~~
+
+---
+
+class: middle
+
+## Reusing the recordered audio
+
+How about incorporating it into our performance:
+
+~~~haskell
+vdac $ sum [
+  cfd (usqr 0.25)  
+    (toSam (loopWav (-1) "song2.wav")) 
+    drums, 
+  mul 0.5 player]
+~~~
+
+The crossfade:
+
+~~~haskell
+cfd :: SigSpace a => Sig -> a -> a -> a
+~~~
+
+The unipolar square wave to switch between drums and recordered audio:
+
+~~~haskell
+usqr :: Sig -> Sig
+~~~
+
+---
+
+class: middle
+
 ## Let's record our performance offline
 
 If we don't have any live parts we can record off-line. 
@@ -605,8 +694,10 @@ writeSnd :: String -> (Sig, Sig) -> IO ()
 We can use it like this:
 
 ~~~haskell
-> writeSnd "song2.wav" $ renderSam (120 * 4) performance
+> writeSnd "drums2.wav" $ fmap (setDur 60) $ runSam (120 * 4) drums
 ~~~
+
+With `setDur` we set the duration in seconds of the signal to record.
 
 Note: the `dac` becomes `writeSnd` since we don't want to hear the output in real-time.
 
@@ -616,7 +707,9 @@ class: middle
 
 ## Using UIs to control the volumes
 
-The UI is a pair of `(appearance, behavior)`. Let's study applicative UIs:
+The UI is a pair of `(appearance, behavior)`. 
+
+Let's study applicative UIs:
 
 We have widgets that are sources of control signals. Example: unipolar knob:
 
@@ -660,12 +753,38 @@ hlifts, vlifts :: ([a] -> b) -> Source [a] -> Source b
 
 class: middle
 
+## Simple example
+
+One knob to control the volume:
+
+~~~
+ dac $ lift1 (\vol -> mul vol $ testDrone2 220) (uknob 0.5)
+~~~
+
+Two knobs to control center frequency and resonance:
+
+~~~
+dac $ hlift2 (\cfq res -> at (mlp cfq (0.9 * res)) $ testDrone2 220) 
+    (xknob (150, 7000) 2500)  
+    (uknob 0.15)
+~~~
+
+The `xknob` is an exponential slider:
+
+~~~
+xknob (minValue, maxValue) initValue
+~~~
+
+---
+
+class: middle
+
 ### Let's add a simple mixer to control the volumes:
 
 our individual parts:
 
 ~~~haskell
-let drones = ...
+let drone = ...
 let drums  = ...
 let player = ...
 ~~~
@@ -674,13 +793,13 @@ mixing parts together:
 
 ~~~haskell
 let mixing [total, v1, v2, v3] = mul total $ sum $ 
-    zipWith mul [v1, v2, v3] [drones, drums, player]
+    zipWith mul [v1, v2, v3] [drone, drums, player]
 ~~~
 
 Four knobs to control the volumes:
 
 ~~~haskell
-dac $ hlifts mixing $ fmap uknob $ replicate 4 [0.5]
+dac $ hlifts mixing $ fmap uknob [0.7, 0.7, 1, 0.4]
 ~~~
 
 ---
@@ -1015,7 +1134,12 @@ Useful for generic volume control:
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
     </script>
     <script>
-      var slideshow = remark.create();
+      var slideshow = remark.create({
+        highlightLanguage: 'haskell',
+        slideNumberFormat: function (current, total) {
+            return (current != 1) ? (current-1) : '';
+        }
+      });
     </script>
   </body>
 </html>
