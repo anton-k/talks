@@ -32,7 +32,7 @@
 
       .image-treasure img {
       width: 90%;
-      height: 90%;
+      height: 90%;Csound-expression Haskell framework for computer music
     }
 
 	  .image-35 img {
@@ -53,6 +53,17 @@
   		width: 25%;
   		height: 25%;
 	  }
+
+      .image-95 img {
+        width: 95%;
+        height: 95%;
+      }      
+
+
+      .image-400 img {
+        width: 400%;
+        height: 400%;
+      }
 
     .hide {
       visibility: hidden;
@@ -80,9 +91,9 @@
 
 class: center, middle
 
-# Csound-expression Haskell framework for computer music
+# Csound-expression: Haskell framework for computer music
 
-	Talk, by Anton Kholomiov. HaL 2016
+Talk, by Anton Kholomiov. HaL 2016
 
 
 ---
@@ -103,9 +114,9 @@ audio programming language
 
 * it's free
 
-* 30 years of research in the firelds of sound design
+* 30 years of research in the fields of sound design
 
-* has many built in auio units
+* has many built in audio units
 
 * good for real-time
 
@@ -143,7 +154,6 @@ class: middle
 
 * no interactive mode
 
-
 ---
 
 class: middle
@@ -162,6 +172,101 @@ class: middle
 
 ---
 
+class: middle
+
+## First program
+
+~~~haskell
+> dac (osc 440)
+~~~
+
+------------------------------------
+
+Sends audible things to speakers:
+
+~~~haskell
+dac :: Audible a => a -> IO ()
+~~~
+
+Outputs pure sine way with given frequency *signal*:
+
+~~~haskell
+osc :: Sig -> Sig
+~~~
+
+---
+
+class: middle
+
+## First program
+
+~~~haskell
+> dac (osc 440)
+~~~
+
+* Modularity is the King
+
+* Prefer convention over configuration
+
+* Use context to derive the defaults as much as possible
+
+---
+
+## First program in Csound
+
+.left-column[
+~~~haskell
+> dac (osc 440)
+~~~
+]
+
+.right-column[
+~~~csound
+<CsoundSynthesizer>
+<CsOptions>
+-odac     ;;;realtime audio out
+</CsOptions>
+<CsInstruments>
+
+sr = 44100
+ksmps = 32
+nchnls = 1
+0dbfs  = 1
+
+instr 1
+
+asig oscil3 1, 440, 1
+     out asig
+
+endin
+
+</CsInstruments>
+<CsScore>
+f1 0 4096 10 1
+
+i 1  0 -1
+e
+</CsScore>
+</CsoundSynthesizer>
+~~~
+]
+
+---
+
+class: middle
+
+## Configuration on demand
+
+~~~haskell
+> let options = mconcat [setRates 48000 64, setJack "my-funky-beep"]
+
+> let run = dacBy options
+
+> run (osc 440)
+~~~
+
+---
+
 class: middle, center
 
 # Key idea!
@@ -172,43 +277,49 @@ Everything is an expression
 
 ---
 
-
 class: middle
 
-# Modularity
+## Signal routing is defined by functional dependencies
 
-### Obstacle 
 
-If your language forces you to use global identifiers
+**Csound**: Trigger procedures that last for some duration
 
-### Solution
+.center[With globals we can route the signal from one procedure to another]
 
-Allocate the names automatically behind the scenes
+**Functional model**: The audio is the data-flow of signals
+
+.center[The signal is routed to audio unit by application of the function]
 
 ---
 
 class: middle
 
-# Modularity
+# The task
 
-Every concept  can be given name or assigned to a variable
+Play notes with an instrument and apply a reverb.
 
-### Example: Instrument application to scores
+Send output to speakers.
 
-Instrument is a function:
+---
+
+class: middle
+
+## Part 1: Let's play notes with an instrument
+
+
+An instrument is a function form note to signal
 
 ~~~haskell
 instr :: Note -> Sig
 ~~~
 
-Scores is a container of notes:
+Scores is a container of notes
 
 ~~~haskell
 scores :: Sco Note
 ~~~
 
-We can apply the instrument to scores and it produces the signal again
-
+We can apply instrument to scores and we get a **signal** as an output:
 
 ~~~haskell
 applyInstr instr scores :: Sig
@@ -218,7 +329,36 @@ applyInstr instr scores :: Sig
 
 class: middle
 
-### Example: Instrument application to event stream
+## Part 2: Let's apply reverb
+
+
+A reverb is a signal to signal function:
+
+~~~haskell
+smallHall :: Sig -> (Sig, Sig)
+~~~
+
+To apply a reverb we just apply the function:
+
+~~~haskell
+> dac (smallHall (applyInstr instr scores))
+~~~
+
+---
+
+class: middle
+
+## Complete solution
+
+~~~haskell
+> dac (smallHall (applyInstr instr scores))
+~~~
+
+---
+
+class: middle
+
+## Apply instrument to event stream
 
 Instrument is a function:
 
@@ -242,35 +382,33 @@ schedule instr events :: Sig
 
 class: middle
 
-## Example: effect application
+## Infinite possibilities
 
-An effect is a function that transforms signals:
+Signal can contain output of an instrument that is applied to
 
-~~~haskell
-fx :: Sig -> Sig
-~~~
+* scores
 
-And to apply effect we can just apply function to the value:
+* event streams
 
-~~~haskell
-addReverb (sched instr events) :: Sig
-~~~
+That signal can take a part in an instrument definition!
 
 ---
 
 class: middle
 
-## We can decompose everything to simple parts
+## Algebra of scores
 
-.center[Scopre API]
+We can decompose everything to simple parts
 
 .center[.image-85[![Sco API](pictures/sco-api.png)]]
 
 ---
 
+class: middle
+
 ## API for scores:
 
-* Primitives. Make single score with single note and make a pause:
+* Primitives: single note and a pause
 
 ~~~haskell
 temp :: a -> Sco a
@@ -278,40 +416,105 @@ temp :: a -> Sco a
 rest :: Duration -> Sco a
 ~~~
 
-* Delay scores and stretch them in duration:
+* Delay and stretch
 
 ~~~haskell
 del, str :: Duration -> Sco a -> Sco a
 ~~~
 
-* Harmonical composition (play at the same time) and melodical composition (play one after another):
+* Compose
 
 ~~~haskell
 har, mel :: [Sco a] -> Sco a
-~~~
-
-* Repeat N-times:
-
-~~~haskell
-loopBy :: Int -> Sco a -> Sco a
 ~~~
 
 ---
 
 class: middle
 
-Side-effects are performed in Haskell way with IO-like monad
+## Haskell way to deal with side effects
 
+~~~haskell
+instance Monad SE where
+    ...
+~~~
+
+`SE` (side effects) is `IO`-monad for Csound.
+
+Examples:
+
+White and pink noise:
+
+~~~haskell
+white, pink :: SE Sig
+~~~
+
+~~~haskell
+main = dac $ do
+    asig1 <- white
+    asig2 <- pink
+    let k = uosc 1
+    return $ k * asig1 + (1 - k) * asig2
+~~~
+
+---
+
+class: middle
+
+## Haskell way to deal with side effects
+
+Procedures:
+
+~~~haskell
+a -> SE ()
+~~~
+
+Saving audio to files:
+
+~~~haskell
+writeWav :: String -> (Sig, Sig) -> SE ()
+~~~
+
+---
+
+class: middle
+
+## FRP: Escape from callback hell
+
+
+~~~haskell
+> let instr _ = return (0.5 * osc 440)
+
+> let onClick events = sched instr $ withDur 0.25 events
+
+> dac $ lift1 onClick $ button "Click Me!"
+~~~
+
+.center[![Click me](pictures/click-me.jpg)]
+
+---
+
+class: middle
+
+## Applying FX to UI-source
+
+Let's add an echo:  
+
+~~~haskell
+> dac $ at (echo 0.5 0.65) $ lift1 onClick $ button "Click Me!"
+~~~
+
+It's no harder than applying FX to a signal
 
 ---
 
 ## FRP: modular approach to events
 
 ~~~haskell
-newtype Evt a = Evt { runEvt :: a -> SE () }
-~~~
+instance Functor Evt    where
 
-We have instance for `Functor` and `Monoid` and there are many seful function that are defined on event streams:
+instance Monoid (Evt a) where
+~~~
 
 Filtering:
 
@@ -341,20 +544,192 @@ oneOf :: (Tuple a, Arg a) => [a] -> Evt b -> Evt a
 
 class: middle
 
+## UI 
+
+Sliders, knobs, XY-panels, joystics:
+
+~~~haskell
+UI -> (Picture, Signal) 
+~~~
+
+Buttons, checkboxes:
+
+~~~haskell
+UI -> (Picture, Events)
+~~~
+
+---
+
+class: middle
+
+## GUI algebra
+
+.center[
+### `hor`
+
+.image-45[![hor](pictures/hor.svg)]
+
+###  `ver`
+
+.image-25[![ver](pictures/vers-ui.svg)]
+]
+
+---
+
+class: middle
+
+## GUI algebra
+
+Stack GUI vertically or horizontally:
+
+~~~haskell
+ver, hor :: [Gui] -> Gui
+~~~
+
+An empty space:
+
+~~~haskell
+space :: Gui
+~~~
+
+Change the relative size of the UI:
+
+~~~haskell
+scale :: Double -> Gui -> Gui
+~~~
+
+---
+
+## Applicative style UI
+
+We can combine the widgets and control signals with functions:
+
+Simple mapping:
+
+~~~haskell
+lift1 :: (a -> b) -> Source a -> Source b
+~~~
+
+Zip together with `f` and stack widgets horizontally or vertically:
+
+
+~~~haskell
+hlift2, vlift2 :: (a -> b -> c) -> Source a -> Source b -> Source c
+
+hlift3, vlift3 :: (a -> b -> c -> d) -> Source a -> Source b -> Source c -> Source d
+
+...
+~~~
+
+Grouping lists of widgets:
+
+~~~haskell
+hlifts, vlifts :: ([a] -> b) -> Source [a] -> Source b
+~~~
+
+---
+
+class: middle
+
+### Let's add a simple mixer to control the volumes:
+
+our individual parts:
+
+~~~
+let drones = ...
+let drums  = ...
+let player = ...
+~~~
+
+mixing parts together:
+
+~~~
+let mixing [total, v1, v2, v3] = mul total $ sum $ 
+    zipWith mul [v1, v2, v3] [drones, drums, player]
+~~~
+
+Four knobs to control the volumes:
+
+~~~
+dac $ hlifts mixing $ fmap uknob $ replicate 4 [0.5]
+~~~
+
+---
+
+class: middle
+
+# Modularity example: Stompboxes
+
+
+.center[.image-95[![Stompboxes](pictures/Fx-boxes.png)]]
+
+---
+
+class: middle
+
+## Show me the code!
+
+~~~
+import Csound.Base
+
+main = dac $ lift1 (\fx -> at fx $ testDrone3 220) $ fxHor 
+            [ uiFilter False 0.5 0.5 0.5
+            , uiChorus False 0.5 0.5 0.5 0.5        
+            , uiPhaser False 0.5 0.5 0.5 0.5 0.5        
+            , uiReverb True  0.5 0.5
+            , uiGain   True  0.5 ]
+~~~
+
+That's it:
+
+~~~
+type FxFun = Sig2 -> SE Sig2
+
+fxHor :: [Source FxFun] -> Source FxFun
+~~~
+
+---
+
+class: middle
+
+# Collection of Patches
+
+Lots of beautiful instruments. 
+
+~~~
+cabal install csound-catalog
+~~~
+
+Just plug and play:
+
+~~~
+> :m +Csound.Patch
+
+> vdac $ mul 0.5 $ atMidi banyan
+~~~
+
+---
+
+class: middle
+
 # Thanks!
 
 
-        github: anton-k, 
+* github: anton-k, 
 
-        email: anton.kholomiov at gmail.com
----
-
+* email: anton.kholomiov at gmail.com
 
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
     </script>
     <script>
-      var slideshow = remark.create();
+      var slideshow = remark.create({
+        highlightLanguage: 'haskell',
+        countIncrementalSlides: false,
+        slideNumberFormat: function (current, total) {
+            return (current != 1) ? (current-1) : '';
+        }
+    });
     </script>
   </body>
 </html>
