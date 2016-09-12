@@ -68,7 +68,7 @@ class: center, middle
 
 # Making computer music with Haskell
 
-	Workshop, by Anton Kholomiov. HaL 2016
+Workshop, by Anton Kholomiov. HaL 2016
 
 ---
 
@@ -804,7 +804,208 @@ dac $ hlifts mixing $ fmap uknob [0.7, 0.7, 1, 0.4]
 
 ---
 
+class: middle
 
+## Case study: Vibhu Vibes
+
+~~~
+import Csound.Base
+import Csound.Patch
+
+main = vdac $ sum [ synt, return $ mul 1.5 glitchy ]
+
+glitchy = mixAt 0.2 smallRoom2 $ 
+    mul (sqrSeq [1, 0.5, 0.25] 8) $ 
+        sum [ loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
+            , mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file]
+
+synt = sum 
+    [ atMidi $ vibhuAvatara 65 (uosc 0.25)
+    , mul pulsar $ atMidi $ prakriti 34
+    , atMidi $ mul (0.5 * uosc 0.25) $ whaleSongPad ]
+    where 
+      pulsar = sawSeq [1, 0.5, 0.25, 0.8, 0.4, 0.1, 0.8, 0.5] 8
+
+file = "/home/anton/loop.wav"      
+~~~
+
+---
+
+class: middle
+
+## Glitch: Pulsating noise
+
+~~~
+dac $ mul (sqrSeq [1, 0.5, 0.25] 8) $ pink
+~~~
+
+Can we substitute pink noise with something more interesting?
+
+
+---
+
+class: middle
+
+## Glitch: Let's try drum file wierd playbacks
+
+~~~
+> let file = "/home/anton/loop.wav"
+> dac $ loopWav1 1 file
+~~~
+
+Let's try in reverse:
+
+~~~
+> dac $ loopWav1 (-1_ file
+~~~
+
+Maybe different speeds:
+
+~~~
+> dac $ loopWav1 0.5 file
+
+> dac $ loopWav1 (-0.25) file
+~~~
+
+---
+
+class: middle
+
+## Glitch: Let's try drum file wierd playbacks
+
+Let's mess around with changing speed:
+
+~~~
+> dac $ loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
+~~~
+
+We can also alter amplitude:
+
+~~~
+> dac $ mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
+~~~
+
+So here is the basis for our drum pulsating noise:
+
+~~~
+let d1 = loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
+
+let d2 = mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
+
+let noisyDrum = sum [d1, d2]
+~~~
+
+---
+
+class: middle
+
+## Glitch: Adding pulsar and reverb
+
+As before:
+
+~~~
+let d1 = loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
+
+let d2 = mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
+
+let noisyDrum = sum [d1, d2]
+~~~
+
+Final glitch:
+
+~~~
+glitchy = mixAt 0.2 smallRoom2 $ mul (sqrSeq [1, 0.5, 0.25] 8) noisyDrum
+
+dac glitchy
+~~~
+
+---
+
+class: middle
+
+## Drone
+
+Main idea: to mix several cool pads from standard collection and
+add a pulsar synchronized with the beat to one of the pads.
+
+Let's try a couple of spacious pads:
+
+~~~
+> vdac $ mul 0.5 $ atMidi nightPad
+
+> vdac $ mul 0.5 $ atMidi $ deepPad nightPad
+~~~
+
+We can substitute the `nighPad` with some other pads like: `fmDroneMedium`, `pwPad`, `dreamPad`, `whaleSongPad`.
+
+---
+
+class: middle
+
+## PADSynth pads
+
+
+If we have Csound 6.05 or higher we can try out nice pads based on PADSynth algorythm:
+
+~~~
+> vdac $ mul 0.45 $ atMidi $ vibhu 45
+
+> vdac $ mul 0.45 $ atMidi $ prakriti 45
+
+> vdac $ mul 0.45 $ atMidi $ avatara 45
+~~~
+
+There are pads that can crossfade between those pads:
+
+~~~
+> vdac $ mul 0.45 $ atMidi $ vibhuAvatara 65 (uosc 0.25)
+~~~
+
+---
+
+class: middle
+
+## Mixing pads
+
+We can experiment to find the right mixture of the PADs
+
+~~~
+> vdac $ mul 0.3 $ sum [atMidi dreamPad, atMidi $ deepPad fmDroneMedium]
+
+> vdac $ mul 0.3 $ sum [atMidi pwPad, atMidi $ deepPad whaleSongPad]
+~~~
+
+---
+
+class: middle
+
+## Adding pulsation
+
+We can add another pad and multiply it's output with rhythminc pulsating envelope:
+
+~~~
+> let pulsar = sawSeq [1, 0.5, 0.25, 0.8, 0.4, 0.1, 0.8, 0.5] 8
+
+> vdac $ mul pulsar $ atMidi nightPad
+~~~
+
+---
+
+class: middle
+
+# Final drone
+
+Let's try them together:
+
+~~~
+> let p1 = atMidi whaleSongPad
+
+> let p2 = atMidi $ deepPad overtonePad
+
+> let p3 = mul pulsar $ atMidi nightPad
+
+> vdac $ mul 0.3  $ sum [p1, p2, p3]
+~~~
 
 ---
 
@@ -1135,10 +1336,11 @@ Useful for generic volume control:
 
 
     </textarea>
-    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    <script src="remark/remark-latest.min.js">
     </script>
     <script>
       var slideshow = remark.create({
+        ratio: "4:3",
         highlightLanguage: 'haskell',
         slideNumberFormat: function (current, total) {
             return (current != 1) ? (current-1) : '';
