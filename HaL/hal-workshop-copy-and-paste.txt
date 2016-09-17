@@ -1,5 +1,7 @@
 # Hello, World!
 
+> ghci
+:m +Csound.Base
 dac (osc 440)
 
 Press Ctrl+C to terminate the program
