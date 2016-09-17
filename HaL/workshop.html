@@ -114,6 +114,8 @@ ghci
 > dac (osc 440)
 ~~~
 
+**Press Ctrl+C to terminate the program!**
+
 .image-45[.center[![Pure sine wave](pictures/Osc.jpg)]]
 
 Dac sends the audio signal to speakers
@@ -131,15 +133,54 @@ osc :: Sig -> Sig
 
 ---
 
+class: middle
+
+## Volume control
+
+We can adjust volume of all audible values with function `mul`:
+
+~~~haskell
+> mul :: Audible a => Sig -> a -> a
+~~~
+
+Let's adjust the volume:
+
+
+~~~Haskell
+> dac $ mul 0.45 $ osc 440
+~~~
+
+---
+
+class: middle
+
+## The dollar sign
+
+Reminder for the novices: the sign `$` is an application
+
+So 
+
+~~~
+> dac $ mul 0.45 $ osc 440
+~~~
+
+it's the same as
+
+~~~Haskell
+> dac (mul 0.45 (osc 440))
+~~~
+
+But without so many parenthesis
+
+---
+
 .left-column[
 ## .green[Hello, Fancy World!]
 ]
 
 .right-column[
 ~~~Haskell
-ghci
-> :m +Csound.Base
-> dac (testDrone 220)
+> dac $ mul 0.5 $ testDrone 220
 ~~~
 
 Try out: `testDrone2`, `testDrone3`, `testDrone4`
@@ -158,7 +199,7 @@ It can be useful as a Pitch reference for strings or wood-wind players.
 ![Pitch classes](pictures/cpspch.png)
 
 ~~~haskell
-> dac $ testDrone $ cpspch 7.02
+> dac $ mul 0.5 $ testDrone $ cpspch 7.02
 ~~~
 
 ---
@@ -191,6 +232,8 @@ Let's practice:
 > dac $ ticks 4 135
 ~~~
 
+There are variations in timbre: ticks2, ticks3, ticks4
+
 ---
 
 class: middle
@@ -206,14 +249,13 @@ nticks measureList bpm  = asignal
 
 Viola!
 
+7 beats:
+
 ~~~haskell
-> dac $ nticks [3,2,3,4] 135
+> dac $ nticks [3,2,2] 135
 
 > dac $ nticks [2, 3, 4, 5] 140
 ~~~
-
-There are variations in timbre: ticks2, ticks3, ticks4
-
 
 ---
 
@@ -252,6 +294,13 @@ Let's adjust the volume:
 > dac $ sum [mul 0.6 drone, return $ fromMono $ mul 1.3 rhythm]
 ~~~
 
+Check out the types:
+
+~~~
+:t drone
+:t rhythm
+~~~
+
 ---
 
 class: middle
@@ -267,7 +316,7 @@ Many beautiful instruments are ready to use (package csound-catalog):
 
 > dac $ mul 0.45 $ atMidi dreamPad
 
-> dac $ mul 0.45 $ atMidi $ vibhu 65
+> dac $ mul 0.45 $ atMidi $ vibhu 65  -- needs Csound 6.05 or higher
 ~~~
 
 With `dac` we listen for messages from the real MIDI-device. 
@@ -283,6 +332,22 @@ vdac :: Audible a => a -> IO ()
 ~~~haskell
 > vdac $ mul 0.7 $ atMidi dreamPad
 ~~~
+
+---
+
+class: middle
+
+## How Bach have listened to it
+
+No equal temperament at the age of Bach:
+
+`atMidiTemp` accepts temperament as the first argument
+
+~~~
+> dac $ atMidiTemp werckmeister harpsichord
+~~~
+
+Can be: meantone, werckmeister, pythagor, young1, young2
 
 ---
 
@@ -418,7 +483,8 @@ class: middle
 Let's add some toms that happen at odd places:
 
 ~~~haskell
-> let drums = sum   [          pat [3, 3, 2] bd
+> let drums = str 0.5 $ 
+              sum   [          pat [3, 3, 2] bd
                     , del 2  $ pat [4]       sn
                     ,          pat' [1, 0.5, 0.2, 0.1] [1] chh 
 
@@ -439,7 +505,8 @@ class: middle
 
 
 ~~~haskell
-> let drums = sum   [          pat [3, 3, 2] bd
+> let drums = str 0.5 $ 
+               sum  [          pat [3, 3, 2] bd
                     , del 2  $ pat [4]       sn
                     ,          pat' [1, 0.5, 0.2, 0.1] [1] chh 
 
@@ -536,7 +603,7 @@ Let's make our LFO a bit more alive. We are going to add filtering
 with center frequency modulated with low frequency oscillator (LFO):
 
 ~~~haskell
-> let filteredHats = mul 8 $ at (mlp (500 + 2500 * uosc 0.1) 0.15) hhats
+> let filteredHats = mul 4 $ at (mlp (500 + 4500 * uosc 0.1) 0.15) hhats
 
 > dac $ filteredHats
 ~~~
@@ -599,9 +666,9 @@ class: middle
 
 > let drums = sum [...]
 
-> let player = toSam $ atMidi bassClarinet
+> let player = toSam $ atMidiTemp werckmeister harpsichord
 
-> let performance = sum [mul 0.74 drone, mul 1.2 drums, mul 0.5 player]
+> let performance = sum [mul 0.74 $ toSam drone, mul 1.2 drums, mul 0.5 player]
 
 > vdac performance
 ~~~
@@ -846,7 +913,7 @@ Can we substitute pink noise with something more interesting?
 
 class: middle
 
-## Glitch: Let's try drum file wierd playbacks
+## Glitch: Let's try drum file weird playbacks
 
 ~~~
 > let file = "/home/anton/loop.wav"
@@ -856,7 +923,7 @@ class: middle
 Let's try in reverse:
 
 ~~~
-> dac $ loopWav1 (-1_ file
+> dac $ loopWav1 (-1) file
 ~~~
 
 Maybe different speeds:
@@ -871,7 +938,7 @@ Maybe different speeds:
 
 class: middle
 
-## Glitch: Let's try drum file wierd playbacks
+## Glitch: Let's try drum file weird playbacks
 
 Let's mess around with changing speed:
 
@@ -1004,7 +1071,17 @@ Let's try them together:
 
 > let p3 = mul pulsar $ atMidi nightPad
 
-> vdac $ mul 0.3  $ sum [p1, p2, p3]
+> let pads = mul 0.3  $ sum [p1, p2, p3]
+
+> vdac pads
+~~~
+
+---
+
+## Let's put it together
+
+~~~
+> vdac $ sum [pads, return glitchy]
 ~~~
 
 ---

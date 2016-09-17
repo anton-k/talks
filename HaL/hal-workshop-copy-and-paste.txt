@@ -1,0 +1,316 @@
+# Hello, World!
+
+dac (osc 440)
+
+Press Ctrl+C to terminate the program
+
+# Volume control
+
+dac $ mul 0.45 $ osc 440
+
+# Hello fancy World
+
+dac $ mul 0.5 $ testDrone 220
+
+# How to specify notes
+
+dac $ mul 0.5 $ testDrone $ cpspch 7.02
+
+# Let's practice D major in the Haskell way
+
+dac $ mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
+
+# What about metronome?
+
+dac $ ticks 4 135
+
+# For rhythm addicted!
+
+dac $ nticks [3,2,3,4] 135
+
+dac $ nticks [2, 3, 4, 5] 140
+
+# Let's practice drone and rhythm
+
+let drone = mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
+
+let rhythm = nticks [3, 3, 2] 120
+
+dac $ sum [drone, return $ fromMono rhythm]
+
+# Volume control
+
+dac $ sum [mul 0.6 drone, return $ fromMono $ mul 1.3 rhythm]
+
+:t drone
+:t rhythm
+
+# How about some cool Plug-and-play synthesizers
+
+:m +Csound.Patch
+
+vdac $ atMidi toneWheelOrgan
+
+vdac $ mul 0.45 $ atMidi dreamPad
+
+vdac $ mul 0.45 $ atMidi $ vibhu 65
+
+# How Bach have listened to it
+
+dac $ mul 0.45 $ atMidiTemp werckmeister harpsichord
+
+dac $ mul 0.45 $ atMidiTemp young2 toneWheelOrgan
+
+# Try out the synthesizers
+
+vdac $ mul 0.45 $ atMidi dreamPad
+
+cathedralOrgan      dreamPad          noiz               whaleSongPad
+vibraphone2         xylophone         simpleMarimba      bassClarinet
+razorLead           fmDroneMedium     hammondOrgan       overtonePad
+choirA              scrapeDahina      pwEnsemble         hulusi
+epiano1             chalandiPlates    banyan             nightPad
+
+# Beat making
+
+:m +Csound.Catalog.Drum.Tr808
+
+bd    - base drum           sn - snare drum         chh - closed high hat
+
+dac bd
+
+dac sn
+
+dac chh
+
+# Creating patterns 
+
+:m +Csound.Sam
+
+## pat -- euclidean beats
+
+dac $ pat [3, 3, 2] bd
+
+## del - delay a pattern by number of beats
+
+dac $ sum [pat [3, 3, 2] bd, del 2 $ pat [4] sn]
+
+dac $ sum [pat [4, 4, 1, 1, 2, 4] bd, del 2 $ pat [4] sn]
+
+## str - change speed
+
+dac $ str 0.5 $ sum [pat [3, 3, 2] bd, del 2 $ pat [4] sn ]
+
+## pat' - making beats with accents
+
+dac $ str 0.5 $ pat' [1, 0.5, 0.2, 0.1] [1] chh
+
+dac $ str 0.5 $ sum [ pat [3, 3, 2] bd, del 2 $ pat [4] sn, pat' [1, 0.5, 0.2, 0.1] [1] chh ]
+
+# Odd kicks
+
+let drums = str 0.5 $ sum [ pat [3, 3, 2] bd, del 2  $ pat [4] sn, pat' [1, 0.5, 0.2, 0.1] [1] chh, del 3  $ pat [5, 11, 7, 4] mtom, pat [4, 7, 1, 9]  htom, del 7  $ pat [3, 7, 6] ltom, del 16 $ pat [15, 2, 3] rim ]
+
+dac drums
+
+# Odd kicks: Adjusting volume
+
+let drums = str 0.5 $ sum  [ pat [3, 3, 2] bd, del 2  $ pat [4] sn, pat' [1, 0.5, 0.2, 0.1] [1] chh, mul 0.25 $ sum [ del 3 $ pat [5, 11, 7, 4] mtom, pat [4, 7, 1, 9]  htom, del 7  $ pat [3, 7, 6] ltom], del 16 $ pat [15, 2, 3] rim ]
+
+dac drums
+
+# Time to try out other sounds:
+
+bd, bd2 -  base drums                 htom, mtom, ltom   - high middle low toms
+sn      -  snare                      cl                 - claves 
+chh     -  closed high-hat            rim                - rim-shot
+ohh     -  open high-hat              mar                - maracas
+cym     - cymbal                      hcon, mcon, lcon   - high, middle, low conga
+
+## `lim` - limit the duration of the sample 
+
+## `mel` - play one pattern after another
+
+## `rest` -- pause for some duration
+
+let hhats = loop $ mel [lim 8 $ pat' [1, 0.5, 0.25, 0.1] [1] chh, rest 8] 
+
+dac $ hhats
+
+# Transformation of audio signals
+
+at :: Audio a => (Sig -> Sig) -> a -> a
+mixAt :: Audio a => Sig -> (Sig -> Sig) -> a -> a
+
+dac $ mixAt 0.2 smallRoom2 drums
+
+# Trick: filtering with LFO 
+
+let filteredHats = mul 4 $ at (mlp (500 + 4500 * uosc 0.1) 0.15) hhats
+
+dac $ filteredHats
+
+mlp :: Sig -> Sig -> Sig -> Sig     -- moog low pass
+uosc :: Sig -> Sig                  -- unipolar pure sine
+
+# How to mix our drone with drums
+
+:t drone
+:t drums
+
+### Sig to Sam
+
+toSam :: ToSam a => a -> Sam            -- infinite
+
+limSam :: ToSam a => D -> a -> Sam      -- finite
+
+renderSam :: D -> Sam -> SE (Sig, Sig)
+
+# Let's mix it all
+
+let player = toSam $ atMidiTemp werckmeister harpsichord
+
+let performance = sum [mul 0.74 $ toSam drone, mul 1.2 drums, mul 0.5 player]
+
+vdac performance
+
+# Let's record our performance live
+
+vdac $ at (dumpWav "song2.wav") performance
+
+# Let's play it back
+
+dac $ loopWav 1 "song2.wav"
+
+dac $ loopWav (-1) "song2.wav"
+
+dac $ loopWav (constSeq [1, 1, -1, 2, 1] 1) "song2.wav"
+
+# Reusing the recordered audio
+
+vdac $ sum [cfd (usqr 0.25) (toSam $ loopWav (-1) "song2.wav") drums, mul 0.5 player]
+
+# Let's record our performance offline
+
+writeSnd "drums2.wav" $ fmap (setDur 60) $ runSam (120 * 4) drums
+
+dac $ loopWav 1 "drums2.wav"
+
+# Using UIs to control the volumes
+
+# Applicative style UIs
+
+# Simple example
+
+dac $ lift1 (\vol -> mul vol $ testDrone2 220) (uknob 0.5)
+
+dac $ hlift2 (\cfq res -> at (mlp cfq (0.9 * res)) $ testDrone2 220) (xknob (150, 7000) 2500) (uknob 0.15)
+
+# Let's add a simple mixer to control the volumes:
+
+let mixing [total, v1, v2, v3] = mul total $ sum $ zipWith mul [v1, v2, v3] [toSam drone, drums, player]
+
+vdac $ hlifts mixing $ fmap uknob [0.7, 0.7, 1, 0.4]
+
+# Case study: Vibhu Vibes
+
+import Csound.Base
+import Csound.Patch
+
+main = vdac $ sum [ synt, return $ mul 1.5 glitchy ]
+
+glitchy = mixAt 0.2 smallRoom2 $ 
+    mul (sqrSeq [1, 0.5, 0.25] 8) $ 
+        sum [ loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
+            , mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file]
+
+synt = sum 
+    [ atMidi $ vibhuAvatara 65 (uosc 0.25)
+    , mul pulsar $ atMidi $ prakriti 34
+    , atMidi $ mul (0.5 * uosc 0.25) $ whaleSongPad ]
+    where 
+      pulsar = sawSeq [1, 0.5, 0.25, 0.8, 0.4, 0.1, 0.8, 0.5] 8
+
+file = "loop.wav"
+
+# Glitch: Pulsating noise
+
+dac $ mul (sqrSeq [1, 0.5, 0.25] 8) $ pink
+
+# Glitch: Let's try drum file weird playbacks
+
+let file = "loop.wav"
+
+dac $ loopWav1 1 file
+
+dac $ loopWav1 (-1) file
+
+dac $ loopWav1 0.5 file
+
+dac $ loopWav1 (-0.25) file
+
+# Glitch: Let's try drum file weird playbacks
+
+dac $ loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
+
+dac $ mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
+
+---
+
+let d1 = loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
+
+let d2 = mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
+
+let noisyDrum = sum [d1, d2]
+
+dac noisyDrum
+
+# Glitch: Adding pulsar and reverb
+
+let glitchy = mixAt 0.2 smallRoom2 $ mul (sqrSeq [1, 0.5, 0.25] 8) noisyDrum
+
+dac glitchy 
+
+# Drone
+
+vdac $ mul 0.5 $ atMidi nightPad
+
+vdac $ mul 0.5 $ atMidi $ deepPad nightPad
+
+# PADSynth pads
+
+vdac $ mul 0.45 $ atMidi $ vibhu 45
+
+vdac $ mul 0.45 $ atMidi $ prakriti 45
+
+vdac $ mul 0.45 $ atMidi $ avatara 45
+
+vdac $ mul 0.45 $ atMidi $ vibhuAvatara 65 (uosc 0.25)
+
+# Mixing pads
+
+vdac $ mul 0.3 $ sum [atMidi dreamPad, atMidi $ deepPad fmDroneMedium]
+
+vdac $ mul 0.3 $ sum [atMidi pwPad, atMidi $ deepPad whaleSongPad]
+
+# Adding pulsation
+
+let pulsar = sawSeq [1, 0.5, 0.25, 0.8, 0.4, 0.1, 0.8, 0.5] 8
+
+vdac $ mul pulsar $ atMidi nightPad
+
+# Final drone
+
+let p1 = atMidi whaleSongPad
+
+let p2 = atMidi $ deepPad overtonePad
+
+let p3 = mul pulsar $ atMidi nightPad
+
+let synt = mul 0.3  $ sum [p1, p2, p3]
+
+vdac pads
+
+# Let's put it together
+
+vdac $ sum [synt, return glitchy]
