@@ -1,0 +1,39 @@
+% csoundexpression-Ac.tex
+\begin{hcarentry}[updated]{csound-expression}
+\report{Anton Kholomiov}%05/15
+\status{active, experimental}
+\makeheader
+
+The csound-expression is a Haskell framework for electronic music production.
+It's based on very efficient and feature rich synth Csound.
+It strives to be as simple and responsive as it can be.
+Features include almost all Csound build in audio units support,
+composable GUIs, FRP for event scheduling, MIDI and OSC support and many others.
+The library was updated for GHC-7.10.
+
+200+ beautiful instruments are implemented. See the csound-catalog package.
+Each instrument is ready for real-time usage. Three drum machines are implemented.
+There is a library of standard effects. It can be used as a guitar processor.
+
+With Csound it inherits many cutting edge sound synth techniques like
+granular synthesis or hyper vectorial synthesis, ambisonics.
+
+The csound-expression is a Csound code generator. The flexible nature of Csound 
+(it's written in C and has wonderful API)  allows to use the produced 
+code on any desktop OS, Android, iOS, Raspberry Pi, Unity, within many other languages.
+We can create audio engines with Haskell.
+
+The library was presented at the Russian Function programming conference 2015
+and at the International Csound Conference 2015. 
+
+The future plans for the library is to bring it on stage and make 
+some audio installations with it, to improve documentation.
+I've created some music with the library. You can listen to it 
+on the soundcloud \url{https://soundcloud.com/anton-kho}.
+
+The library is available on Hackage.
+See the packages csound-expression, csound-sampler and csound-catalog.
+
+\FurtherReading
+  \url{https://github.com/anton-k/csound-expression}
+\end{hcarentry}
