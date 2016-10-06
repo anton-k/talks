@@ -87,7 +87,7 @@ a pair:
 ~~~
 
 It's better to hear the output and not just look at the code. So let's setup everything we need.
-Tochange the defaults we can use the function `dacBy`:
+To change the defaults we can use the function `dacBy`:
 
 ~~~haskell
 > let run x = dacBy (setRates 48000 128) x
@@ -177,10 +177,17 @@ We can add several signals to create a chord:
 > dac (testDrone (cpspch 7.00) + testDrone (cpspch 7.07))
 ~~~
 
+The output is too loud we can make it quiter by scaling the amplitude of the signal with
+function `mul`:
+
+~~~haskell
+> dac (mul 0.3 (testDrone (cpspch 7.00) + testDrone (cpspch 7.07)))
+~~~
+
 We can add signals with the function `sum`. It takes in a list of values and sums them up:
 
 ~~~haskell
-> dac (sum [testDrone (cpspch 7.00), testDrone (cpspch 7.07), testDrone (cpspch 8.04)])
+> dac (mul 0.3 (sum [testDrone (cpspch 7.00), testDrone (cpspch 7.07), testDrone (cpspch 8.04)]))
 ~~~
 
 The Haskell lists are enclosed into square brackets: `[1, 2, 3]`. Tuples are enclosed in parenthesis: `(a, b)`.
@@ -202,7 +209,7 @@ To apply the same functions to all elements in the list we can use the function 
 Keeping that in mind we can rewrite our chord like this:
 
 ~~~haskell
-> dac (sum (fmap (testDrone . cpspch) [7.00, 7.07, 8.04]))
+> dac (mul 0.3 (sum (fmap (testDrone . cpspch) [7.00, 7.07, 8.04])))
 ~~~
 
 Here we can see a glimpse of functional programming in action. With simple operator
@@ -211,7 +218,7 @@ We can make the expression more readable if we introduce local values:
 
 ~~~haskell
 > let signals = fmap (testDrone . cpspch) [7.00, 7.07, 8.04]
-> dac (sum signals)
+> dac (mul 0.3 (sum signals))
 ~~~ 
 
 We introduce a variable with syntax:
@@ -236,13 +243,13 @@ or a tuple of signals or it can be a UI-widget that produces the signals.
 Let's adjust a volume for out chord:
 
 ~~~haskell
-> dac (mul 0.56 (sum signals))
+> dac (mul 0.36 (sum signals))
 ~~~
 
 The volume value is the signal itself. We can control it with LFO:
 
 ~~~haskell
-> dac (mul (0.7 * uosc 1) (sum signals))
+> dac (mul (0.3 * uosc 1) (sum signals))
 ~~~
 
 The function `uosc` produces unipolar pure sine signal (ranges from 0 to 1).
@@ -268,8 +275,10 @@ like this:
 Let's combine the metronome with rhythm:
 
 ~~~haskell
-> let drone = sum (fmap (testDrone . cpspch) [7.00, 7.07, 8.04])
+> let drone = mul 0.3 (sum (fmap (testDrone . cpspch) [7.00, 7.07, 8.04]))
+
 > let rhythm = nticks [2, 2, 3] 160
+
 > dac (sum [drone, rhythm])
 
 <interactive>:12:18:
@@ -279,7 +288,7 @@ Let's combine the metronome with rhythm:
 ~~~
 
 We get an error. Why does it happen? We can sum only values of the same type.
-But our values `drone` and `rhythm` have different types. We can heck the type of
+But our values `drone` and `rhythm` have different types. We can check the type of
 any value in the interpreter with command `:t value`
 
 ~~~haskell
@@ -306,6 +315,9 @@ fromMono :: Sig -> (Sig, Sig)
 ### Introduction to side effects
 
 But we also need to wrap the value to `SE`. The `SE` is short for side-effects.
+The expression `SE a` means that the type `SE` is parametrized with some type of `a`.
+Like lists or arrays have certain structure but the type of elements can be anything
+as long as they are organized in a certain way.
 Now we are landing at the zone that is unique to Haskell. The Haskell is a pure language.
 It's pure in mathematical sense. The pureness means that if we assign the expression to the value
 we can safely substitute the value with assigned expression anywhere in the code. 
@@ -329,11 +341,11 @@ is different. The expressions are executed by functional dependencies. The compi
 top most expression it looks at the definition and substitutes all values with it's definitions then
 it founds other compound values and substitutes them with definitions and so on when there are only primitive 
 values left.It's a simplified model of execution. The real model is a bit more complicated. 
-It executes subexpressions lazily. It means that it caches te values so that we don't need to compute them twice.
+It executes subexpressions lazily. It means that it caches the values so that we don't need to compute them twice.
 
 But how do we use random values in Haskell. The randomness breaks the purity. In Haskell there is a special
 type called with kind of scary name `Monad`. There are many monad tutorials perhaps too many of them.
-You can read on this topic [here](https://github.com/anton-k/monads-for-drummers).
+You can read on this topic [here](https://github.com/anton-k/monads-for-drummers) or [there](http://blog.sigfpe.com/2006/08/you-could-have-invented-monads-and.html).
 
 Right now it's good to know that there is a special syntax in Haskell to handle the impure code.
 It's called a `do`-notation:
@@ -396,6 +408,12 @@ With the help of dollars we can rewrite it like this:
 > dac $ mul 0.5 $ osc $ 440 * uosc 0.1
 ~~~
 
+So the essence of the dollar can be expressed in the equation:
+
+~~~haskell
+f (g a)   ===  f $ g a
+~~~
+
 ### Let's add some cool synthesizers
 
 Many beautiful instruments are ready to use (package `csound-catalog`):
@@ -422,10 +440,10 @@ So the value is not fixed or pure and depends on the creativity of the user.
 With `dac` we listen for messages from the real MIDI-device. If you don't have the MIDI-keyboard try out `vdac`. 
 It creates a virtual keyboard to test the synthesizer.
 
-vdac creates virtual MIDI-keyboard:
+The function `vdac` creates virtual MIDI-keyboard:
 
 ~~~haskell
-> vdac $ mul 0.7 $ atMidi dreamPad
+> vdac $ mul 0.3 $ atMidi dreamPad
 ~~~
 
 #### Non-equal temperaments
@@ -742,11 +760,11 @@ of `lim` and `toSam` functions.
 So with function toSam we can convert the `drone` to sample. Let's mix it all:
 
 ~~~haskell
-> let drone = toSam $ mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
+> let drone = toSam $ mul 0.6 $ mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
 
 > let drums = sum [...]
 
-> let player = toSam $ atMidiTemp werckmeister harpsichord
+> let player = toSam $ atMidiTemp young1 harpsichord
 
 > let performance = sum [mul 0.74 drone, mul 1.2 drums, mul 0.5 player]
 
@@ -799,13 +817,13 @@ and repeats them with the given rate. For example we can create simple arpeggiat
 with it:
 
 ~~~haskell
-> dac $ tri (constSeq [220, 330, 440] 3)
+> dac $ tri (constSeq [220, 330, 440] 6)
 ~~~
 
 Also we can add a bit of reverb:
 
 ~~~haskell
-> dac $ mixAt 0.25 largeHall2 $ tri (constSeq [220, 330, 440] 3)
+> dac $ mul 0.25 $ mixAt 0.17 largeHall2 $ tri (constSeq [220, 330, 440] 6)
 ~~~
 
 The library csound-expression is based on signals. The audio components take in signals
@@ -891,6 +909,12 @@ We can use it like this:
 
 With `setDur` we set the duration in seconds of the signal to record.
 
+We can play it back:
+
+~~~haskell
+> dac $ loopWav 1 "drums2.wav"
+~~~
+
 ### Using UIs
 
 The Csound has built in support for UI-widgets (they are implemented with FLTK). 
@@ -926,7 +950,10 @@ value to audio signal like this:
 > dac $ lift1 synt $ uknob 0.5
 ~~~
 
-There is another type o knobs. It's useful for frequencies. It produces
+Notice that with let we can define not only constants but also functions. Our function `synt`
+takes in volume as an argument.
+
+There is another type of knobs. It's useful for frequencies. It produces
 exponential values in the given range:
 
 ~~~haskell
@@ -952,7 +979,7 @@ hlift2, vlift2 :: (a -> b -> c) -> Source a -> Source b -> Source c
 They apply the function of two arguments to two values made with widgets
 and stack the visuals `h`orizontally `v`ertically.
 
-Let's 
+Let's see how it works:
 
 ~~~haskell
 > let synt amp cps = mul amp (tri cps)
@@ -971,7 +998,7 @@ There are functions that even take in lists of widgets:
 hlifts, vlifts :: ([a] -> b) -> Source [a] -> Source b
 ~~~
 
-We can create volume a simple mixing console for our example. We have our individual parts:
+We can create a simple mixing console for our example. We have our individual parts:
 
 ~~~haskell
 let drone = ...
@@ -986,28 +1013,28 @@ Let's create a mixer function:
         zipWith mul [v1, v2, v3] [drone, drums, player]
 ~~~
 
+You should write it in the single line of code in the interpreter. I've divided it in two lines for readability.
 The function `zipWith` maps over two lists. It applies a function
 of to arguments to the individual components of two lists:
 
-~~~
+~~~haskell
 zipWith f [a1, a2, a3] [b1, b2, b3]  ===  [f a1 b1, f a2 b2, f a3 b3]
 ~~~
 
-we can create four knobs to control the volumes:
+We can create four knobs to control the volumes:
 
 ~~~haskell
-dac $ hlifts mixing $ fmap uknob [0.7, 0.7, 1, 0.4]
+> dac $ hlifts mixing $ fmap uknob [0.7, 0.7, 1, 0.4]
 ~~~
 
-There are other widgets like sliders, checkboxes, buttons. The interested reader
+There are other widgets like sliders, check boxes, buttons. The interested reader
 should study the documentation for the library on [github](https://github.com/spell-music/csound-expression).
 
 ### Beyond interpreter
 
 So far we made all programs within the interpreter. It's useful
 for making sketches and quick testing of ideas but sometimes 
-we want to save our ideas to reuse them. 
-
+we want to save our ideas to reuse them.
 We need to be able to write Haskell modules and compile and load them
 to the interpreter. Here is the simplest possible program:
 
@@ -1023,7 +1050,7 @@ The `Synt` is the name of the module. we should save it to the module `Synt.hs`.
 The value `main` is an entry point for a program. Runtime system starts to execute
 the program from the function main. 
 
-We can compile and run the program by executing in the interpreter:
+We can compile and run the program by executing in the system command line:
 
 ~~~haskell
 runhaskell Synt.hs
@@ -1050,7 +1077,7 @@ If we have made the changes in the module we can reload it with command `:r` (sh
 > :r
 ~~~
 
-I'd like to experiment in the interpreter then I save the parts I like to sme module reload it
+I like to experiment in the interpreter then I save the parts I like to some module, reload it
 to the interpreter and start to build the next values on top of the things I've defined before.
 
 
@@ -1095,7 +1122,8 @@ Let's break this file apart. The music has only two parts.
 Thy are drum part and synt part. The drum part is created 
 by playing back the ordinary drum loop at strange rates.
 Here I use my own file "loop.wav" But you can insert any
-short drum loop that you like. The synt part is created 
+short drum loop that you like or download the file at the [repo on github](https://github.com/anton-k/talks/tree/master/HaL/audio). 
+The synt part is created 
 with three pads that are playing at the same time. 
 So it's a layered synthesizer. 
 
@@ -1110,7 +1138,7 @@ The main idea of the drum part can be illustrated with pink noise:
 ~~~
 
 The `sqrSeq`  is just like `constSeq`. It's a step sequencer. 
-The only difference is that each step is created with square wave shape.
+The only difference is that each step is created with unipolar square wave shape.
 In the case of `constSeq` it is just a constant value.
 
 We create rhythmical bursts. But can we substitute the pink noise
@@ -1158,6 +1186,8 @@ let d1 = loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
 let d2 = mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
 
 let noisyDrum = sum [d1, d2]
+
+dac noisyDrum
 ~~~
 
 ### Glitch: Adding pulsar and reverb
@@ -1165,7 +1195,7 @@ let noisyDrum = sum [d1, d2]
 We can add a reverb and pulsar from the pink noise example:
 
 ~~~haskell
-glitchy = mixAt 0.2 smallRoom2 $ mul (sqrSeq [1, 0.5, 0.25] 8) noisyDrum
+let glitchy = mixAt 0.2 smallRoom2 $ mul (sqrSeq [1, 0.5, 0.25] 8) noisyDrum
 
 dac glitchy
 ~~~
@@ -1185,6 +1215,9 @@ Let's try a couple of spacious pads:
 > vdac $ mul 0.5 $ atMidi $ deepPad nightPad
 ~~~
 
+The `deepPad` is an interesting function it takes in a patch and creates new
+patch where every played note is accompanied with the note of the same pitch but octave below.
+Can you think of how it can be implemented in Csound.
 We can substitute the nighPad with some other pads like: `fmDroneMedium`, `pwPad`, `dreamPad`, `whaleSongPad`.
 
 ### PADSynth pads
@@ -1199,7 +1232,7 @@ If we have Csound 6.05 or higher we can try out nice pads based on PADSynth algo
 > vdac $ mul 0.45 $ atMidi $ avatara 45
 ~~~
 
-The argument fro the function ranges from (1 to 100 or even higher).
+The argument for the function ranges from (1 to 100 or even higher).
 It controls the thickness of the bands. With higher values
 e can get more chorused instruments.
 
@@ -1260,7 +1293,7 @@ of scores and event streams, functions for advanced synthesis techniques like
 granular synthesis. You can read about them in the guide at the [github page
 of the project](https://github.com/spell-music/csound-expression).
 
-The main idea of the library is the motto from the scheme book SICP that
+The main idea of the library is the motto from the SICP book which is actually based on Scheme that
 
     everything is an expression
 
@@ -1271,41 +1304,43 @@ and easily redistribute your synthesizers. You can create a package of your own
 patches and workflows for performances or download someone else's modules.
 No need for include macroses. It just has the normal module system. 
 
-There are certain limitations of the library. Some feature are not implemented.
+There are certain limitations of the library. Some features are not implemented.
 Right now we can not use arrays, the while statement doesn't 
 work properly. There are some known bugs. Not many of them but they are present. 
-But it can change in the future. Nonetheless the library is pretty stable and usable
-you can listen to some music that was made with it on [soundcloud](https://soundcloud.com/anton-kho).
+But it can change in the future. Nonetheless the library is pretty stable and usable.
+You can listen to some music that was made with it on [soundcloud](https://soundcloud.com/anton-kho).
 
 Further links:
 
-* Guide for the library: 
+* Guides for the library: 
 
-    * csound-expression: https://github.com/spell-music/csound-expression
+    * [csound-expression](https://github.com/spell-music/csound-expression)
 
-    * csound-sampler: https://github.com/spell-music/csound-sampler
+    * [csound-sampler](https://github.com/spell-music/csound-sampler)
 
 * Hackage documentation:
 
-    * csound-expression: https://hackage.haskell.org/package/csound-expression
+    * [csound-expression](https://hackage.haskell.org/package/csound-expression)
 
-    * csound-sampler: https://hackage.haskell.org/package/csound-sampler
+    * [csound-sampler](https://hackage.haskell.org/package/csound-sampler)
 
-    * csound-catalog: https://hackage.haskell.org/package/csound-catalog
+    * [csound-catalog](https://hackage.haskell.org/package/csound-catalog)
 
 * Learn haskell books, all of them are available for free online: 
 
-    * Learn you a haskell for a great good: http://learnyouahaskell.com/
+    * [Learn you a haskell for a great good](http://learnyouahaskell.com/)
 
-    * Real world Haskell: http://book.realworldhaskell.org/read/
+    * [Real world Haskell](http://book.realworldhaskell.org/read/)
 
-    * Yet another haskell tutorial (it's rather old but good one): https://www.umiacs.umd.edu/~hal/docs/daume02yaht.pdf
+    * [Yet another haskell tutorial](https://www.umiacs.umd.edu/~hal/docs/daume02yaht.pdf) (it's rather old but good one).
 
 * Monad tutorials:
 
-    * Dan Pipponi, You could have invented monads: http://blog.sigfpe.com/2006/08/you-could-have-invented-monads-and.html
+    * [Dan Pipponi, You could have invented monads](http://blog.sigfpe.com/2006/08/you-could-have-invented-monads-and.html)
 
-    * My tutorial, Monads for drummers: https://github.com/anton-k/monads-for-drummers
+    * My tutorial, [Monads for drummers](https://github.com/anton-k/monads-for-drummers)
+
+*Happy Csounding and happy Haskelling!* 
 
 ## IV. Reference
 
@@ -1484,7 +1519,7 @@ bbp centerFreq reson ain = aout
 
 Examples:
 
-~~~
+~~~haskell
 > dac $ mlp (3500 * uosc 1) 0.1 $ saw 220
 
 > dac $ mlp (3500 * uosc (linseg [1, 2, 4, 1, 2, 0.5, 8, 0.5, 2, 4, 0])) 0.1 $ saw 220
@@ -1580,7 +1615,7 @@ Reverbs: smallRoom2, smallHall2, largeHall2, magicCave2:
 
 > let synt = midi $ onMsg $ mul (fades 0.01 0.7) . tri
 
-> vdac $ mul 0.5 $ mixAt 0.25 magicCave2 synt
+> vdac $ mul 0.25 $ mixAt 0.25 magicCave2 synt
 ~~~
 
 #### Delays
@@ -1599,7 +1634,7 @@ Example:
 ~~~haskell
 > let synt = midi $ onMsg $ mul (fades 0.01 0.7) . tri
 
-> vdac $ mul 0.5 $ mixAt 0.25 largeHall2 $ mixAt 0.65 (echo 0.5 0.8) synt
+> vdac $ mul 0.25 $ mixAt 0.25 largeHall2 $ mixAt 0.65 (echo 0.5 0.8) synt
 ~~~
 
 ### Magic functions
