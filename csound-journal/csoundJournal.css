@@ -1,0 +1,42 @@
+body {
+	background-color: #CCCCCC;
+	text-align: center;
+}
+
+#wrap {
+	border-top: 1px solid #999999;
+	border-right: 1px solid #333333;
+	border-bottom: 1px solid #333333;
+	border-left: 1px solid #999999;
+	padding: 30px;
+	width: 720px;
+	margin: 0px auto 0px auto;
+	text-align: left;
+	background-color: white;
+}
+
+#navigation {
+	font-family: Arial;
+	font-size: .8em;
+	font-weight: bold;
+}
+
+#navigation a {
+	color: black;
+	text-decoration: none;
+}
+
+#navigation a:hover {
+	color: red;
+}
+
+
+#header {
+	text-align: center;
+}
+
+#content {
+	padding: 30px;
+}
+
+

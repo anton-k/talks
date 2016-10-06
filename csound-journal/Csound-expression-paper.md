@@ -1,8 +1,21 @@
-# Speed up your Csound work-flow with Haskell. Introduction to Csound-expression.
+<div id="wrap">
+<div id="navigation">CSOUND JOURNAL<a href="index.html"></a>
+</div>
+
+<div id="header">
+## Speed up your Csound work-flow with Haskell
+
+### Introduction to Csound-expression
+</div>
+
+
+<div id="content">
+    
+## Introduction
 
 The Csound-expression is the Haskell framework for computer music production.
-It creates the Csound programs out of Haskell programs.
-It can greatly speed up the text-based development of computer music and synthesizers.
+It creates the Csound programs out of Haskell programs. It can greatly speed up 
+the text-based development of computer music and synthesizers.
 
 The Haskell is a purely functional programming language. It means that a program
 is made out of functions and compositions of functions. It's a modern language that
@@ -12,6 +25,8 @@ Why should Csounders bother on a new language like Haskell? The price of learnin
 but it can give you a expressive power that's hard to imagine within the Csound syntax. 
 
 Imagine that you can 
+
+* write a synthesizer in a single line of code.
 
 * develop synthesizers right in the REPL. You can type in a line of
     code press enter and you get the sound out of your speakers as a feedback. Then you can
@@ -28,6 +43,8 @@ Imagine that you can
      not so frequently. 
 
 * use beautiful predefined instruments. There is a collection of patches ready to be used.
+
+* create reusable libraries of synthesizers.
 
 * imagine that many things are derived from the context or set up to sensible defaults. 
 
@@ -46,7 +63,8 @@ But let the code speak for itself. Here is the Hello World program:
 > dac (osc 440)
 ~~~
 
-The function `dac` sends the signal to speakers and the `osc` creates a pure sine wave.
+That's all we need to write to get the audio going! The function `dac` sends the signal to 
+speakers and the `osc` creates a pure sine wave.
 
 In the haskell we apply function to arguments and use spaces as delimiters:
 
@@ -58,7 +76,7 @@ We can use parenthesis to group the values. The `(f a1 a2 a3)` is the same as we
 without commas. So in the previous example the function `g` is applied to two arguments. 
 The first one is `(f a1 a2 a3)` and the second one is `b2`. So recalling our first example we 
 apply the function `osc` to the frequency `440` an we pass the result to the function `dac` (short for 
-digital to analog converter). The naming here is borrowed from PD. 
+digital to analog converter). The naming here is borrowed from Pure Data. 
 
 That's it! It's a complete program! We have the default settings for rates and the number of output 
 channels is derived from the input of the `dac` function. For example we can make it a stereo by passing 
@@ -69,6 +87,16 @@ a pair:
 ~~~
 
 It's better to hear the output and not just look at the code. So let's setup everything we need.
+Tochange the defaults we can use the function `dacBy`:
+
+~~~haskell
+> let run x = dacBy (setRates 48000 128) x
+
+> run (osc 440, saw 220)
+~~~
+
+When the line is run the function `dac` creates a file `tmp.csd` in the current directory
+with Csound code and invokes Csound on it.
 
 ### Installation guide
 
@@ -78,11 +106,11 @@ is like `pip` for Python or `npm` for `Node` `js`. The library is hosted on Hack
 of Haskell open source software. They are called packages. The cabal is going to check the Hackage
 for libraries and install them on demand (resolving dependencies, creating docs etc). 
 
-So we need the GHC (the haskell compiler) and the Cabal (haskell package distribution system). 
-And ofcourse we need the Csound. The recommended version is 6.05 or higher. But it also can run on previous
+So we need the GHC (the Haskell compiler) and the Cabal (haskell package distribution system). 
+And for sure we need the Csound. The recommended version is 6.05 or higher. But it also can run on previous
 versions too. The 5.17 is the desired minimum. But the more modern Csound you use the more features is available to you. 
 
-I guess that the Csound is alredy installed on your system. The easiest way to get the haskell components
+I guess that the Csound is alredy installed on your system. The easiest way to get the Haskell components
 is to install the [Haskell Platform](https://www.haskell.org/platform/).
 When it's installed we can install the library.
 
@@ -107,8 +135,18 @@ Type to install the batteries:
 It includes ready to use synthesizers and functions to compose the music with clips
 aligned with BPM. 
 
+## I. Fist steps with the library
 
-## Hello World!
+In this section we are going to study the most interesting features of the library.
+Features are introduced with examples. The library is rather big so my point in this section
+is not to give the complete description of it but to show the most useful tools for 
+a performing musician and composer. We are going to learn how to create simple drones, 
+how to practice with metronome and create complex beats in few lines of code. 
+How to record performance and incorporate the recorded audio in the live gig.
+We are going to play some beautiful patches with midi devices and encounter 
+unusual ancient tunings.
+
+### Hello World!
 
 Now we can open the Haskell REPL called ghci (GHC interpreter for short) import the library 
 and type the Hello world program:
@@ -136,10 +174,10 @@ Also we can use Csound pitch class to specify the frequency:
 We can add several signals to create a chord:
 
 ~~~haskell
-> dac ((testDrone (cpspch 7.00)) + (testDrone (cpspch 7.07)))
+> dac (testDrone (cpspch 7.00) + testDrone (cpspch 7.07))
 ~~~
 
-We can add signals with the funtion `sum`. It takes in a list of values and sums them up:
+We can add signals with the function `sum`. It takes in a list of values and sums them up:
 
 ~~~haskell
 > dac (sum [testDrone (cpspch 7.00), testDrone (cpspch 7.07), testDrone (cpspch 8.04)])
@@ -189,7 +227,7 @@ we can just write:
 value = expression
 ~~~
 
-## Adjusting the volume
+### Adjusting the volume
 
 We can adjust the volume with function `mul`. It takes a signal as the first argument
 and anything that can be scaled with signals as a volume. It can be a simple signal
@@ -209,7 +247,7 @@ The volume value is the signal itself. We can control it with LFO:
 
 The function `uosc` produces unipolar pure sine signal (ranges from 0 to 1).
 
-## Metronome click
+### Metronome click
 
 We know how to create chords. Can we augment the harmony with the rhythm?
 We can create a simple metronome click with the function `ticks`:
@@ -265,7 +303,7 @@ We can convert mono audio to stereo with function
 fromMono :: Sig -> (Sig, Sig)
 ~~~
 
-## Introduction to side effects
+### Introduction to side effects
 
 But we also need to wrap the value to `SE`. The `SE` is short for side-effects.
 Now we are landing at the zone that is unique to Haskell. The Haskell is a pure language.
@@ -295,9 +333,9 @@ It executes subexpressions lazily. It means that it caches te values so that we 
 
 But how do we use random values in Haskell. The randomness breaks the purity. In Haskell there is a special
 type called with kind of scary name `Monad`. There are many monad tutorials perhaps too many of them.
-You can read on this topic here: https://github.com/anton-k/monads-for-drummers .
+You can read on this topic [here](https://github.com/anton-k/monads-for-drummers).
 
-Right now it's good to know that three is a special syntax in Haskell to handle the impure code.
+Right now it's good to know that there is a special syntax in Haskell to handle the impure code.
 It's called a `do`-notation:
 
 ~~~haskell
@@ -340,7 +378,7 @@ We can adjust the volumes with function `mul`:
 > dac (sum [drone, mul 1.3 (return (fromMono rhythm))])
 ~~~
 
-## The dollar operator
+### The dollar operator
 
 As our expressions become more involved it's good to introduce a useful operator
 that can save us some typing. It's a dollar operator `$`. It's an application of function
@@ -358,7 +396,7 @@ With the help of dollars we can rewrite it like this:
 > dac $ mul 0.5 $ osc $ 440 * uosc 0.1
 ~~~
 
-## Let's add some cool synthesizers
+### Let's add some cool synthesizers
 
 Many beautiful instruments are ready to use (package `csound-catalog`):
 
@@ -382,7 +420,7 @@ You can see the `SE` wrapper in the output. It's used because we read the values
 So the value is not fixed or pure and depends on the creativity of the user.
 
 With `dac` we listen for messages from the real MIDI-device. If you don't have the MIDI-keyboard try out `vdac`. 
-It creates a virtual keyboard to test the synth.
+It creates a virtual keyboard to test the synthesizer.
 
 vdac creates virtual MIDI-keyboard:
 
@@ -390,10 +428,10 @@ vdac creates virtual MIDI-keyboard:
 > vdac $ mul 0.7 $ atMidi dreamPad
 ~~~
 
-### Non-equal temperaments
+#### Non-equal temperaments
 
 The interesting feature of the patches is that they are defined on frequencies not on midi pitches.
-We can specify our on conversion from midi-pitches to frequencies. The default behavior is to use the
+We can specify our own conversion from midi-pitches to frequencies. The default behavior is to use the
 equal temperament. But with the function `atMidiTemp` we can supply our own temperaments.
 There are some predefined ones to use: meantone, werckmeister, pythagor, young1, young2.
 
@@ -403,7 +441,7 @@ We can listen to the music as the Bach have listened to it:
 > vdac $ atMidiTemp werckmeister harpsichord
 ~~~
 
-### There are many more synthesizers
+#### There are many more synthesizers
 
 You can try some patches from the list:
 
@@ -418,7 +456,7 @@ epiano1             chalandiPlates    banyan             nightPad
 We can find out the whole list of patches  in the module `Csound.Patch` of the
 package csound-catalog. See [Csound.Patch](https://hackage.haskell.org/package/csound-catalog-0.5.0/docs/Csound-Patch.html).
 
-## Beat making
+### Beat making
 
 Let's substitute the metronome with drums! We have a collection of predefined drums. 
 Right now we can find three collections in the package csound-catalog. Also we can use audio
@@ -445,25 +483,27 @@ Let's listen to them:
 ~~~
 
 
-### Creating patterns
+#### Creating patterns
 
-We can use the module `Csound.Sam` to arrange themusic from clips that are
+We can use the module `Csound.Sam` to arrange the music from clips that are
 aligned with bpm:
 
 ~~~haskell
 > import Csound.Sam
 ~~~
 
-#### Eucledean beats
+##### Euclidean beats
 
 There is a very simple way to create quite complicated beats. 
-We can create so called Eucledean beats with function `pat` (short for pattern). 
+We can create so called Euclidean beats with function `pat` (short for pattern). 
 
 ~~~haskell
 > dac $ pat [3, 3, 2] bd
+
+> dac $ pat [2, 1, 1] chh
 ~~~
 
-#### Delaying the clips
+##### Delaying the clips
 
 We can delay the sample by the number of beats with the function `del` (short for delay):
 
@@ -478,7 +518,7 @@ For readability I write it on several lines but you should type it in the single
 > dac $ sum [ pat [3, 3, 2] bd, del 2 $ pat [4] sn ]
 ~~~
 
-#### Changing the speed 
+##### Changing the speed 
 
 We can change the speed of playback with the function `str` (short for stretch).
 
@@ -486,7 +526,7 @@ We can change the speed of playback with the function `str` (short for stretch).
 > dac $ str 0.5 $ sum [ pat [3, 3, 2] bd, del 2 $ pat [4] sn ]
 ~~~
 
-#### Introduce the accents
+##### Introduce the accents
 
 When all samples are played with the same volume it quickly becomes too boring to listen.
 We can specify the accents with the function `pat'`. For example let's add a hi-hats:
@@ -521,7 +561,7 @@ Let's add some toms that happen at the odd places:
 > dac drums
 ~~~
 
-#### Adjusting the volume of the samples
+##### Adjusting the volume of the samples
 
 We can also adjust the volumes of samples with the function `mul` just like we did it with signals
 or tuples of signals:
@@ -546,7 +586,7 @@ One-liner for copy and paste:
 > let drums = str 0.5 $ sum  [ pat [3, 3, 2] bd, del 2  $ pat [4] sn, pat' [1, 0.5, 0.2, 0.1] [1] chh, mul 0.25 $ sum [ del 3  $ pat [5, 11, 7, 4] mtom, pat [4, 7, 1, 9]  htom, del 7  $ pat [3, 7, 6] ltom], del 16 $ pat [15, 2, 3] rim]
 ~~~
 
-#### Other samples
+##### Other samples
 
 You can try to create your own beats with other drum samples. 
 Here is the list of the samples available in the Tr808 module:
@@ -562,7 +602,7 @@ cym     - cymbal                      hcon, mcon, lcon   - high, middle, low con
 We can also try out other drum collections defined in the modules `Csound.Catalog.Drum.Hm` 
 and `Csound.Catalog.Drum.MiniPops` (see the docs at the hackage page for the package csound-catalog).
 
-#### Limit the duration of the sample
+##### Limit the duration of the sample
 
 So far all our samples were infinite. But what if we want to alternate
 the hi-hats with the moments of silence? we can limit the duration of the sample
@@ -596,7 +636,7 @@ one after another:
 > dac $ mel [htom, mtom, ltom, sn]
 ~~~
 
-#### Playing loops
+##### Playing loops
 
 What if we want to repeat the sequence of four kicks over and over. We can repeat them
 with the function `loop`:
@@ -605,9 +645,9 @@ with the function `loop`:
 > dac $ loop $ mel [htom, mtom, ltom, sn]
 ~~~
 
-#### Time to make a pause
+##### Time to make a pause
 
-We can make a sample that contains a silence andlasts for certain amount of beats
+We can make a sample that contains a silence and lasts for certain amount of beats
 with function `rest`:
 
 ~~~haskell
@@ -628,16 +668,16 @@ we don't have special instrument and score sections. This brings a great flexibi
 to the whole process.
 
 
-#### Transformation of audio signals
+##### Transformation of audio signals
 
-We can transform audio entities with at and mixAt functions. Simplified (conceptual) signature:
+We can transform audio entities with `at` and `mixAt` functions. Simplified (conceptual) signature:
 
 ~~~haskell
 at :: Audio a => (Sig -> Sig) -> a -> a
 ~~~
 
 So it applies a signal transformation function to some value that contains signal.
-It's rather simplified signature. The actual at function can also apply functions
+It's rather simplified signature. The actual function `at` can also apply functions
 with side effects `Sig -> SE Sig` or functions that take in mono signals and produce stereo signals.
 And it transforms the second argument to the correct result. 
 
@@ -653,7 +693,7 @@ It takes in a dry/wet ratio (0 to 1) as the first argument. Let's add a bit of r
 > dac $ mixAt 0.2 smallRoom2 drums
 ~~~
 
-#### Trick: filtering with LFO
+##### Trick: filtering with LFO
 
 Let's make our hi-hats a bit more alive. We are going to add filtering with center frequency modulated with low frequency oscillator (LFO):
 
@@ -765,14 +805,14 @@ with it:
 Also we can add a bit of reverb:
 
 ~~~haskell
-dac $ mixAt 0.25 largeHall2 $ tri (constSeq [220, 330, 440] 3)
+> dac $ mixAt 0.25 largeHall2 $ tri (constSeq [220, 330, 440] 3)
 ~~~
 
-The library csound-expression is based on signals all modules take in signals
+The library csound-expression is based on signals. The audio components take in signals
 and produce signals even application of an instrument to scores produces a signal.
 With this model it becomes very easy to apply an effect like reverb. We just apply the
 function to the signal that contains the mix of the whole song. In this sense
-the signals in the CE are not just streams of numbers the can contain more
+the signals in the CE are not just streams of numbers. They can contain more
 involved data structures that can be rendered to Csound signals in the end.
 This direct routing (with application of functions) can save us from using
 the global variables or routing of mixed signals as it happens in Csound.
@@ -795,7 +835,7 @@ The crossfade:
 cfd :: SigSpace a => Sig -> a -> a -> a
 ~~~
 
-It can crossfade between values of many types on just signals.
+It can crossfade between values of many types not just signals.
 
 The unipolar square wave to switch between drums and recorded audio:
 
@@ -815,7 +855,7 @@ wav  :: String -> Sam
 The `wav1` is for mono audio files and the `wav` is for stereo ones.
 The `wavr` and `wavr1` play files in reverse.
 
-Also we can convert the samples to signals. Thre is a function that
+Also we can convert the samples to signals. There is a function that
 renders the samples:
 
 ~~~haskell
@@ -829,12 +869,12 @@ The first argument is BPM.
 
 We have recorded the audio with function `dumpWav` it sends the audio
 through and dumps it to disk. It's good to record the live performance. 
-But often we want to record prdefined music. The music that can be played solely by computer
+But often we want to record predefined music. The music that can be played solely by computer
 without our intervention. In this case we can save a lot off time if we  can
-record the music offline. The Csound can often render the audio much faster 
+record the music off-line. The Csound can often render the audio much faster 
 then real time. Also this mode is useful the other way around. When the audio
 is so complicated that it can not be played in real time but we can record
-it offline. 
+it off-line. 
 
 To record offline we need to substitute the `dac` function with function `writeSnd`
 since we don't want to send the audio to speakers:
@@ -851,10 +891,10 @@ We can use it like this:
 
 With `setDur` we set the duration in seconds of the signal to record.
 
-## Using UIs
+### Using UIs
 
 The Csound has built in support for UI-widgets (they are implemented with FLTK). 
-There is support for UI in csound expression also. But it's organized in different way.
+There is support for UI in Csound expression also. But it's organized in different way.
 
 In the Haskell library UI is a container for the value augmented with visual appearance.
 We can combine containers together to create a compound value. We can apply functions to
@@ -962,13 +1002,13 @@ dac $ hlifts mixing $ fmap uknob [0.7, 0.7, 1, 0.4]
 There are other widgets like sliders, checkboxes, buttons. The interested reader
 should study the documentation for the library on [github](https://github.com/spell-music/csound-expression).
 
-## Beyond interpreter
+### Beyond interpreter
 
 So far we made all programs within the interpreter. It's useful
 for making sketches and quick testing of ideas but sometimes 
 we want to save our ideas to reuse them. 
 
-We need to be able to write haskell modules and compile and load them
+We need to be able to write Haskell modules and compile and load them
 to the interpreter. Here is the simplest possible program:
 
 ~~~haskell
@@ -983,7 +1023,7 @@ The `Synt` is the name of the module. we should save it to the module `Synt.hs`.
 The value `main` is an entry point for a program. Runtime system starts to execute
 the program from the function main. 
 
-We can compile and run the progam by executing in the interpreter:
+We can compile and run the program by executing in the interpreter:
 
 ~~~haskell
 runhaskell Synt.hs
@@ -1014,10 +1054,10 @@ I'd like to experiment in the interpreter then I save the parts I like to sme mo
 to the interpreter and start to build the next values on top of the things I've defined before.
 
 
-## Case study: Vibhu vibes
+## II. Case study: Vibhu vibes
 
 As the last example I'd like to share the process of creation of the real track.
-It's called vibhu vibes. You can listen to it on the [soundloud](https://soundcloud.com/anton-kho/vibhu-vibes).
+It's called vibhu vibes. You can listen to it on the [soundcloud](https://soundcloud.com/anton-kho/vibhu-vibes).
 
 Here is the complete code for the piece:
 
@@ -1065,7 +1105,7 @@ Let's take a closer look at the drum part.
 
 The main idea of the drum part can be illustrated with pink noise:
 
-~~~
+~~~haskell
 > dac $ mul (sqrSeq [1, 0.5, 0.25] 8) $ pink
 ~~~
 
@@ -1080,39 +1120,39 @@ with something more interesting?
 
 Let's play some short drum loop:
 
-~~~
+~~~haskell
 > let file = "/home/anton/loop.wav"
 > dac $ loopWav1 1 file
 ~~~
 
 Let's try in reverse:
 
-~~~
+~~~haskell
 > dac $ loopWav1 (-1) file
 ~~~
 
 Maybe different speeds:
 
-~~~
+~~~haskell
 > dac $ loopWav1 0.5 file
 > dac $ loopWav1 (-0.25) file
 ~~~
 
 Let's mess around with changing speed:
 
-~~~
+~~~haskell
 > dac $ loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
 ~~~
 
 We can also alter amplitude:
 
-~~~
+~~~haskell
 > dac $ mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
 ~~~
 
 So here is the basis for our drum pulsating noise:
 
-~~~
+~~~haskell
 let d1 = loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
 
 let d2 = mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
@@ -1122,9 +1162,9 @@ let noisyDrum = sum [d1, d2]
 
 ### Glitch: Adding pulsar and reverb
 
-We can add a reverb and pulsar from the pnik noise example:
+We can add a reverb and pulsar from the pink noise example:
 
-~~~
+~~~haskell
 glitchy = mixAt 0.2 smallRoom2 $ mul (sqrSeq [1, 0.5, 0.25] 8) noisyDrum
 
 dac glitchy
@@ -1139,7 +1179,7 @@ and add a pulsar synchronized with the beat to one of the pads.
 
 Let's try a couple of spacious pads:
 
-~~~
+~~~haskell
 > vdac $ mul 0.5 $ atMidi nightPad
 
 > vdac $ mul 0.5 $ atMidi $ deepPad nightPad
@@ -1151,7 +1191,7 @@ We can substitute the nighPad with some other pads like: `fmDroneMedium`, `pwPad
 
 If we have Csound 6.05 or higher we can try out nice pads based on PADSynth algorithm:
 
-~~~
+~~~haskell
 > vdac $ mul 0.45 $ atMidi $ vibhu 45
 
 > vdac $ mul 0.45 $ atMidi $ prakriti 45
@@ -1165,7 +1205,7 @@ e can get more chorused instruments.
 
 There are pads that can crossfade between those pads:
 
-~~~
+~~~haskell
 > vdac $ mul 0.45 $ atMidi $ vibhuAvatara 65 (uosc 0.25)
 ~~~
 
@@ -1173,7 +1213,7 @@ There are pads that can crossfade between those pads:
 
 We can experiment to find the right mixture of the PADs
 
-~~~
+~~~haskell
 > vdac $ mul 0.3 $ sum [atMidi dreamPad, atMidi $ deepPad fmDroneMedium]
 
 > vdac $ mul 0.3 $ sum [atMidi pwPad, atMidi $ deepPad whaleSongPad]
@@ -1181,9 +1221,9 @@ We can experiment to find the right mixture of the PADs
 
 ### Adding pulsation
 
-We can add another pad and multiply it's output with rhythminc pulsating envelope:
+We can add another pad and multiply it's output with rhythmic pulsating envelope:
 
-~~~
+~~~haskell
 > let pulsar = sawSeq [1, 0.5, 0.25, 0.8, 0.4, 0.1, 0.8, 0.5] 8
 
 > vdac $ mul pulsar $ atMidi nightPad
@@ -1193,7 +1233,7 @@ We can add another pad and multiply it's output with rhythminc pulsating envelop
 
 Let's try them together:
 
-~~~
+~~~haskell
 > let p1 = atMidi whaleSongPad
 
 > let p2 = atMidi $ deepPad overtonePad
@@ -1207,11 +1247,11 @@ Let's try them together:
 
 Let's put together drums and drone:
 
-~~~
+~~~haskell
 > vdac $ sum [pads, return glitchy]
 ~~~
 
-## Conclusion
+## III. Conclusion
 
 I hope that you have enjoyed the journey. It's hard to fit all the features
 of the library into a single article. I've tried to choose the most interesting
@@ -1227,7 +1267,7 @@ The main idea of the library is the motto from the scheme book SICP that
 Everything can be combined  by applying the functions to values. There is no 
 special syntax beyond this simple idea. This can greatly enhance the productivity 
 of the Csound user. Also the Haskell gives the user ability to package things into the libraries
-and easily redistribute your synthesizers. You can create a packae of your own 
+and easily redistribute your synthesizers. You can create a package of your own 
 patches and workflows for performances or download someone else's modules.
 No need for include macroses. It just has the normal module system. 
 
@@ -1267,7 +1307,7 @@ Further links:
 
     * My tutorial, Monads for drummers: https://github.com/anton-k/monads-for-drummers
 
-## Reference
+## IV. Reference
 
 Some types and functions for quick start.
 
@@ -1275,7 +1315,7 @@ Some types and functions for quick start.
 
 In the library we have just several basic types:
 
-~~~
+~~~haskell
 Sig  -- audio and control signals
 
 D    -- constant numbers
@@ -1287,13 +1327,41 @@ SE   -- Side-effects
 Spec -- spectrums (used in pvs opcodes)
 ~~~
 
+### Rendering the audio
+
+~~~haskell
+dac   -- send audio to speakers
+
+dacBy -- supply options (rates, drivers, midi-devices)
+
+vdac  -- dac with virtual midi-keyboard.
+
+writeSnd -- render audio to file offline
+
+writeSndBy -- supply options (rates, drivers, midi-devices)
+
+setRates  -- sets the sample rate and the block size
+
+setJack   -- sets the jack name
+~~~
+
+Examples:
+
+~~~haskell
+> let opt = setRates 48000 128 <> setJack "sine-wave"
+> dacBy opt (osc 220)
+~~~
+
+We use operator `<>` to combine the options. See the standard class [Data.Monoid](https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html) for more information.
+
+
 ### Sound design tools
 
-#### Audio aves
+#### Audio waves
 
 Pure sine, sawtooth, square, triangle, pulse width:
 
-~~~
+~~~haskell
 osc, saw, sqr, tri :: Sig -> Sig
 
 pw :: Sig -> Sig -> Sig
@@ -1302,15 +1370,23 @@ pw bandwidth frequency = ...
 
 Unipolar waves (useful for LFOs): `uosc`, `usaw`, `usqr`, `utri`.
 
+Examples:
+
+~~~haskell
+> dac $ mul 0.5 $ tri $ 220 * (1 + 0.08 * uosc 3)
+
+> dac $ mul 0.25 $ pw (0.5 * uosc 0.12) 220 + pw (0.2 + 0.3 * uosc 0.2) 220
+~~~
+
 #### Envelope generators
 
-~~~
+~~~haskell
 linseg, expseg :: [D] -> Sig
 ~~~
 
 Just like in Csound but arguments are passed in  the list and the last value is held:
 
-~~~
+~~~haskell
 > linseg [0, 0.2, 1, 1.3, 0.5, 1.5, 0]
 ~~~
 
@@ -1318,15 +1394,34 @@ So the zero is held it's not going to drop down to infinity.
 
 **L**inear adsr and e**x**ponential adsr **e**nvelope **g**enerators:
 
-~~~
+~~~haskell
 leg, xeg :: D -> D -> D -> D -> Sig
+~~~
+
+Attack-sustain-release envelope:
+
+~~~haskell
+fades :: D -> D -> Sig
+fades fadeInTime fadeOutTime = ...
+~~~
+
+Examples:
+
+~~~haskell
+> dac $ osc $ 220 * (1 + 0.5 * linseg [0, 2, 1, 2, 0.5, 1, 0.5, 1, 0])
+
+> let env = leg 0.02 0.1 0 0
+
+> dac $ mul env $ sqr $ 220 * env
+
+> vdac $ midi $ onMsg $ mul (fades 0.1 0.5) . osc
 ~~~
 
 #### Filters
 
 Moog-like low pass filter:
 
-~~~
+~~~haskell
 mlp :: Sig -> Sig -> Sig -> Sig
 mlp centerFreq resonance asig = aout
 ~~~
@@ -1334,13 +1429,13 @@ mlp centerFreq resonance asig = aout
 Notice that the order of arguments is reversed. It's not like in Csound.
 The reason for that is that in Haskell it's convenient to use less used
 arguments as first arguments. Because in Haskell we have partial application. 
-With partial applicatio if we apply single argument to the function of to arguments
+With partial application if we apply single argument to the function of to arguments
 it doesn't lead to type error. It creates a function of one argument. The first
 argument is bound to a passed value and the second is free to use.
 
 Here is an example:
 
-~~~
+~~~haskell
 > :t lp
 mlp :: Sig -> Sig -> Sig -> Sig
 
@@ -1359,20 +1454,192 @@ passing more arguments to the function `mlp`. The order of arguments is the same
 
 Ordinary filters, low, high, band pass and band reject filters:
 
-~~~
+~~~haskell
 lp, hp, bp, br :: Sig -> Sig -> Sig -> Sig
 ~~~
 
 Add z ass prefix to get zero-delay filters:
 
-~~~
+~~~haskell
 zlp, zhp, zbp, zbr :: Sig -> Sig -> Sig -> Sig
 ~~~
 
-Add m prefix to get moog low pass filter:
+Ladder filters (moog-like and zero delay):
 
-ladder filters (moog-like and zero delay):
-
-~~~
+~~~haskell
 ladder, zladder :: Sig -> Sig -> Sig -> Sig
 ~~~
+
+Butterworth filters:
+
+~~~haskell
+blp, bhp :: Sig -> Sig -> Sig
+
+blp centerFreq ain = aout
+
+bbp, bbr :: Sig -> Sig -> Sig -> Sig
+
+bbp centerFreq reson ain = aout
+~~~
+
+Examples:
+
+~~~
+> dac $ mlp (3500 * uosc 1) 0.1 $ saw 220
+
+> dac $ mlp (3500 * uosc (linseg [1, 2, 4, 1, 2, 0.5, 8, 0.5, 2, 4, 0])) 0.1 $ saw 220
+~~~
+
+#### Creation of functional tables
+
+Play oscillator with given table:
+
+~~~haskell
+oscBy :: Tab -> Sig -> Sig
+~~~
+
+Harmonic series
+
+~~~haskell
+sines :: [Double] -> Tab
+~~~
+
+Harmonic series with exact frequencies:
+
+~~~haskell
+type PartialNumber = Double
+type PartialStrength = Double
+
+sines2 :: [(PartialNumber, PartialStrength)] -> Tab
+~~~
+
+Linear and exponential curves:
+
+~~~haskell
+lins, exps :: [Double] -> Tab
+~~~
+
+Set table size and add guarding point:
+
+~~~haskell
+setSize :: Int -> Tab -> Tab
+guardPoint :: Tab -> Tab
+~~~
+
+Skip normalization:
+
+~~~haskell
+skipNorm :: Tab -> Tab
+~~~
+
+Examples
+
+~~~haskell
+> dac $ mul (uosc 0.5 * usqr 4) $ oscBy (sines [1, 0.5, 0, 0, 0.25]) 220
+~~~
+
+#### Midi
+
+Creates audio signal out instrument definition and user midi input.
+
+~~~haskell
+midi :: Sigs a => (Msg -> SE a) -> SE a
+~~~
+
+The `Msg` is the midi message we can read amplitude and frequency with ampCps function:
+
+~~~haskell
+ampCps :: Msg -> (D, D)
+~~~
+
+Useful function `onMsg`. It converts function that takes in a frequency signal or constant
+or pair of amplitude and frequency to the function that is defined on messages. It's often
+goes hand at hand with function `midi`:
+
+~~~haskell
+> vdac $ midi $ onMsg osc
+~~~
+
+We can add envelope to remove clicks and pops:
+
+~~~haskell
+> let synt cps = mul (fades 0.01 0.5) $ osc cps
+
+> vdac $ mul 0.5 $ midi $ onMsg synt
+~~~
+
+
+#### Reverbs
+
+Reverbs: smallRoom2, smallHall2, largeHall2, magicCave2:
+
+~~~haskell
+> let x = mul (uosc 0.5 * usqr 4) $ oscBy (sines [1, 0.5, 0, 0, 0.25]) 220
+
+> dac $ mixAt 0.25 largeHall2 x
+
+> let synt = midi $ onMsg $ mul (fades 0.01 0.7) . tri
+
+> vdac $ mul 0.5 $ mixAt 0.25 magicCave2 synt
+~~~
+
+#### Delays
+
+~~~haskell
+type MaxDelayTime = D
+type Feedback = Sig
+type Balance = Sig
+
+echo :: MaxDelayTime -> Feedback -> Sig -> SE Sig
+pingPong :: DelayTime -> Feedback -> Balance -> Sig2 -> SE Sig2
+~~~
+
+Example:
+
+~~~haskell
+> let synt = midi $ onMsg $ mul (fades 0.01 0.7) . tri
+
+> vdac $ mul 0.5 $ mixAt 0.25 largeHall2 $ mixAt 0.65 (echo 0.5 0.8) synt
+~~~
+
+### Magic functions
+
+There are certain magic functions that are defined on arguments of many types.
+
+#### Volume control
+
+Scales the amplitude of something that produces signals. It can be a single signal
+or tuples of signals or signals wrapped in the `SE` or produced with UI-widget.
+
+~~~haskell
+mul :: Audible a => Sig -> a -> a
+~~~
+
+#### Transformation of signals
+
+The `at` converts something audible with signal-like function
+and `mixAt` converts with dry-wet ratio. It's the first argument that ranges from 0 (all dry)
+to 1 (all wet).
+
+~~~haskell
+at    :: Audible a => (Sig -> Sig) -> a -> a
+
+mixAt :: Audible a => Sig -> (Sig -> Sig) -> a -> a
+~~~
+
+### Patches
+
+Plays patch with midi:
+
+~~~haskell
+atMidi :: Sigs a => Patch a -> SE a
+~~~
+
+Plays single note:
+
+~~~haskell
+atNote :: Sigs a => Patch a -> (D, D) -> SE a
+atNote patch (amplitude, frequency) = ...
+~~~
+
+</div>

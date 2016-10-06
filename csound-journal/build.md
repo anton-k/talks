@@ -1,0 +1,1 @@
+pandoc --template=html.template --css=csoundJournal.css -S -i Csound-expression-paper.md -o Csound-expression-paper.html
