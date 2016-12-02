@@ -550,23 +550,23 @@ rest :: D -> Sam
 
 ---
 
-## Transformation of audio signals
+## Добавим эффекты к барабанам
 
-We can transform audio entities with `at` and `mixAt` functions.
-Simplified (conceptual) signature:
+`at` и `mixAt`  отвечают за эффекты.
+Упрощённая сигнатура:
 
 ~~~haskell
 at :: Audio a => (Sig -> Sig) -> a -> a
 ~~~
 
-The `mixAt` takes dry/wet ratio as the first argument.
-0 -- only dry signal, 1 -- only wet and the mixture inbetween. 
+`mixAt` принимает dry/wet отношение.
+0 -- только "сухой" сигнал, 1 -- только "мокрый" (преобразованный). 
 
 ~~~haskell
 mixAt :: Audio a => Sig -> (Sig -> Sig) -> a -> a
 ~~~
 
-Let's add a bit of reverb to the drums:
+Добавим немного ревера:
 
 ~~~haskell
 > dac $ mixAt 0.2 smallRoom2 drums
