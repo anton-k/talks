@@ -78,7 +78,7 @@ class: center, middle
 
 # Сочиняем электронную музыку на Haskell
 
-Семинар, Антон Холомьёв. FPconf 2016
+Антон Холомьёв. FPconf 2016
 
 ---
 
@@ -197,8 +197,6 @@ class: middle
 ~~~
 
 Попробуйте: `testDrone2`, `testDrone3`, `testDrone4`
-
-Можно воспользоваться этой функцией как референсной частотой
 
 #### Но я музыкант, неужели мне придётся писать всё в герцах?
 ]
@@ -430,7 +428,7 @@ class: middle
 > :m +Csound.Sam      -- Подключим сэмплер
 ~~~
 
-### pat -- евклидовы биты
+### pat -- евклидовы ритмы
 
 Работает как `nticks` но с нашим звуком:
 
@@ -492,42 +490,24 @@ class: middle
 Добавим томы и рим-шот в случайных местах:
 
 ~~~haskell
+> let toms = mul 0.25 $  
+                sum [
+                    , del 3  $ pat [5, 11, 7, 4] mtom
+                    ,          pat [4, 7, 1, 9]  htom
+                    , del 7  $ pat [3, 7, 6] ltom 
+                    ]
+
+
+
 > let drums = str 0.5 $ 
               sum   [          pat [3, 3, 2] bd
                     , del 2  $ pat [4]       sn
                     ,          pat' [1, 0.5, 0.2, 0.1] [1] chh 
-
-                    , del 3  $ pat [5, 11, 7, 4] mtom
-                    ,          pat [4, 7, 1, 9]  htom
-                    , del 7  $ pat [3, 7, 6] ltom
-
+                    , toms
                     , del 16 $ pat [15, 2, 3] rim
                     ]
 > dac drums
 ~~~
-
----
-
-class: middle
-
-## Настроим громкость
-
-~~~haskell
-> let drums = str 0.5 $ 
-               sum  [          pat [3, 3, 2] bd
-                    , del 2  $ pat [4]       sn
-                    ,          pat' [1, 0.5, 0.2, 0.1] [1] chh 
-
-                    mul 0.25 $ sum [
-                      , del 3  $ pat [5, 11, 7, 4] mtom
-                      ,          pat [4, 7, 1, 9]  htom
-                      , del 7  $ pat [3, 7, 6] ltom]
-
-                    , del 16 $ pat [15, 2, 3] rim
-                    ]
-> dac drums
-~~~
-
 
 ---
 
@@ -574,63 +554,6 @@ loop :: Sam -> Sam              - бесконечный повтор
 > let hhats = loop $ mel [lim 8 $ pat' [1, 0.5, 0.25, 0.1] [1] chh, rest 8] 
 
 > dac $ hhats
-~~~
-
----
-
-## Добавим эффекты к барабанам
-
-`at` и `mixAt`  отвечают за эффекты.
-Упрощённая сигнатура:
-
-~~~haskell
-at :: Audio a => (Sig -> Sig) -> a -> a
-~~~
-
-`mixAt` принимает dry/wet отношение.
-
-* `0` -- только *"сухой"* сигнал, 
-
-* `1` -- только *"мокрый"* (преобразованный). 
-
-~~~haskell
-mixAt :: Audio a => Sig -> (Sig -> Sig) -> a -> a
-~~~
-
-Добавим немного ревера:
-
-~~~haskell
-> dac $ mixAt 0.2 smallRoom2 drums
-~~~
-
----
-
-class: middle
-
-## Приём: фильтрация с LFO
-
-Будем изменять срез фильтра медленно меняющимся синусом (LFO):
-
-~~~haskell
-> let filteredHats = mul 4 $ at (mlp (500 + 4500 * uosc 0.1) 0.15) hhats
-
-> dac $ filteredHats
-~~~
-
-Функции:
-
-Муговский фильтр :
-
-~~~haskell
-mlp :: Sig -> Sig -> Sig -> Sig
-mlp centerFrequency resonance asig = ...
-~~~
-
-Униполярная синусоида (от 0 до 1):
-
-~~~haskell
-uosc :: Sig -> Sig
-uosc frequency = ...
 ~~~
 
 ---
@@ -911,7 +834,13 @@ class: middle
 
 ## Спасибо за внимание!
 
+~~~
+    github      : anton-k
 
+    email       : anton.kholomiov@gmail.com
+
+    soundcloud  : anton-kho
+~~~
 ---
 
     </textarea>

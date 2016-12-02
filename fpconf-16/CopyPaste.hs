@@ -144,12 +144,6 @@ dac $ str 0.5 $ sum [ pat [3, 3, 2] bd, del 2 $ pat [4] sn, pat' [1, 0.5, 0.2, 0
 
 -- # Звуки невпопад
 
-let toms = sum [del 3  $ pat [5, 11, 7, 4] mtom, pat [4, 7, 1, 9]  htom, del 7  $ pat [3, 7, 6] ltom]
-let drums = str 0.5 $ sum [pat [3, 3, 2] bd, del 2  $ pat [4] sn, pat' [1, 0.5, 0.2, 0.1] [1] chh, toms, del 16 $ pat [15, 2, 3] rim]
-dac drums
-
--- # Настроим громкость
-
 let toms = mul 0.25 $ sum [del 3  $ pat [5, 11, 7, 4] mtom, pat [4, 7, 1, 9]  htom, del 7  $ pat [3, 7, 6] ltom]
 let drums = str 0.5 $ sum [pat [3, 3, 2] bd, del 2  $ pat [4] sn, pat' [1, 0.5, 0.2, 0.1] [1] chh, toms, del 16 $ pat [15, 2, 3] rim]
 dac drums
@@ -184,19 +178,6 @@ cym     - cymbal                      hcon, mcon, lcon   - high, middle, low con
 
 let hhats = loop $ mel [lim 8 $ pat' [1, 0.5, 0.25, 0.1] [1] chh, rest 8] 
 dac $ hhats
-
--- # Добавим эффекты к барабанам
-
--- at    :: Audio a =>        (Sig -> Sig) -> a -> a
--- mixAt :: Audio a => Sig -> (Sig -> Sig) -> a -> a
-
-dac $ mixAt 0.2 smallRoom2 drums
-
--- # Приём: фильтрация с LFO
-
-let filteredHats = mul 4 $ at (mlp (500 + 4500 * uosc 0.1) 0.15) hhats
-
-dac filteredHats
 
 -- # Добавим гармонию к барабанам
 
@@ -243,10 +224,6 @@ dac $ loopWav1 (-0.25) file
 
 -- # Глитч: сэмпл барабанов с разными скоростями
 
-dac $ loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
-
-dac $ mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
-
 let d1 = loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
 
 let d2 = mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
@@ -285,7 +262,7 @@ let p2 = atMidi $ deepPad overtonePad
 
 let p3 = mul pulsar $ atMidi nightPad
 
-let pads = mul 0.3  $ sum [p1, p2, p3]
+let pads = mul 0.3  $ sum [p1, p2, mul 2 p3]
 
 vdac pads
 
@@ -294,5 +271,3 @@ vdac pads
 vdac $ sum [pads, return glitchy]
 
 -- # Спасибо за внимание!
-
-
