@@ -20,6 +20,11 @@
       }
       .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
 
+      .image-75 img {
+        width: 75%;
+        height: 75%;
+      }
+
       .image-50 img {
   		width: 50%;
   		height: 50%;
@@ -43,6 +48,11 @@
   		width: 25%;
   		height: 25%;
 	  }
+
+      .image-15 img {
+        width: 15%;
+        height: 15%;
+      }      
 
 	   /* Two-column layout */
       .left-column {
@@ -190,7 +200,7 @@ class: middle
 
 Можно воспользоваться этой функцией как референсной частотой
 
-#### Но я музыкант, неужели мне придётся писать всё в частотах
+#### Но я музыкант, неужели мне придётся писать всё в герцах?
 ]
 
 ---
@@ -209,7 +219,7 @@ class: middle
 
 class: center, middle
 
-## Практикуемся в Ре-мажоре с Хаскелем
+### Практикуемся в Ре-мажоре
 
 ~~~haskell
 --                                         D     A     D      F# 
@@ -265,14 +275,30 @@ class: middle
 ## Соединим метроном с гармонией
 
 ~~~Haskell
-drone     :: SE (Sig, Sig)
+> let drone = mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
 
-rhythm    :: Sig
+> let rhythm = nticks [3, 3, 2] 120
 
 > dac $ sum [drone, return $ fromMono rhythm]
 ~~~
 
-Почему `return $ fromMono`
+Почему `return $ fromMono`?
+
+---
+
+class: middle
+
+### Дело в типах
+
+~~~
+drone :: SE Sig2    -- Sig2 === (Sig, Sig)
+
+rhythm :: Sig
+
+> dac $ sum [drone, return $ fromMono rhythm]
+~~~
+
+Почему `return $ fromMono`?
 
 ~~~
 fromMono :: Sig -> (Sig, Sig)
@@ -350,8 +376,9 @@ razorLead           fmDroneMedium     hammondOrgan       overtonePad
 
 choirA              scrapeDahina      pwEnsemble         hulusi
 
-epiano1             chalandiPlates    banyan             nightPad		
-					
+epiano1             chalandiPlates    magicBanyan        nightPad		
+
+(vibhu 65)          (avatara 60)      (bhumi 50)         (rishi 70)					
 ~~~
 
 --------------------------------------
@@ -391,6 +418,12 @@ bd    - base drum           sn - snare drum         chh - closed high hat
 
 class: middle
 
+.left-column[
+.image-75[.center[![Евклид](pictures/euclid.png)]]
+]
+
+.right-column[
+
 ## Создаём паттерны 
 
 ~~~
@@ -405,6 +438,7 @@ class: middle
 > dac $ pat [3, 3, 2] bd
 ~~~
 
+]
 ---
 
 class: middle
@@ -502,8 +536,8 @@ class: middle
 ## Попробуем разные звуки
 
 ~~~
-bd, bd2 -  base drums                 htom, mtom, ltom   - high middle low toms
-           боска                                           томы 
+bd      -  base drums                 htom, mtom, ltom   - high middle low toms
+           бочка                                           томы 
 
 sn      -  snare                      cl                 - claves 
            рабочий                                         палочки
@@ -522,22 +556,16 @@ cym     - cymbal                      hcon, mcon, lcon   - high, middle, low con
 
 ---
 
-### `lim` - назначить длину сэмпла (limit)
+### Давайте делать паузы...
 
 ~~~haskell
-lim :: D -> Sam -> Sam 
-~~~
+lim :: D -> Sam -> Sam          - назначить длину сэмпла (limit)
 
-### `mel` - играем один сэмпл за другим (melody)
+mel :: [Sam] -> Sam             - играем один сэмпл за другим (melody)
 
-~~~haskell
-mel :: [Sam] -> Sam
-~~~
+rest :: D -> Sam                - пауза (число долей)
 
-### `rest` -- пауза (число долей)
-
-~~~haskell 
-rest :: D -> Sam
+loop :: Sam -> Sam              - бесконечный повтор    
 ~~~
 
 Внесём пузы в партию тарелок:
@@ -560,7 +588,10 @@ at :: Audio a => (Sig -> Sig) -> a -> a
 ~~~
 
 `mixAt` принимает dry/wet отношение.
-0 -- только "сухой" сигнал, 1 -- только "мокрый" (преобразованный). 
+
+* `0` -- только *"сухой"* сигнал, 
+
+* `1` -- только *"мокрый"* (преобразованный). 
 
 ~~~haskell
 mixAt :: Audio a => Sig -> (Sig -> Sig) -> a -> a
@@ -576,10 +607,9 @@ mixAt :: Audio a => Sig -> (Sig -> Sig) -> a -> a
 
 class: middle
 
-## Trick: filtering with LFO 
+## Приём: фильтрация с LFO
 
-Let's make our LFO a bit more alive. We are going to add filtering 
-with center frequency modulated with low frequency oscillator (LFO):
+Будем изменять срез фильтра медленно меняющимся синусом (LFO):
 
 ~~~haskell
 > let filteredHats = mul 4 $ at (mlp (500 + 4500 * uosc 0.1) 0.15) hhats
@@ -587,16 +617,16 @@ with center frequency modulated with low frequency oscillator (LFO):
 > dac $ filteredHats
 ~~~
 
-The functions:
+Функции:
 
-Moog low-pass filter
+Муговский фильтр :
 
 ~~~haskell
 mlp :: Sig -> Sig -> Sig -> Sig
 mlp centerFrequency resonance asig = ...
 ~~~
 
-Unipolar pure sine wave:
+Униполярная синусоида (от 0 до 1):
 
 ~~~haskell
 uosc :: Sig -> Sig
@@ -607,7 +637,7 @@ uosc frequency = ...
 
 class: middle
 
-## How to mix our drone with drums
+## Добавим гармонию к барабанам
 
 ~~~haskell
 drone :: SE (Sig, Sig)
@@ -617,35 +647,26 @@ drums :: Sam
 
 ### Sig to Sam
 
-We can lift the drone to `Sam`:
+Мы можем завернуть `Sig` в `Sam`:
 
 ~~~haskell
-toSam :: ToSam a => a -> Sam            -- infinite
+toSam :: ToSam a => a -> Sam            -- бесконечный сигнал
 
-limSam :: ToSam a => D -> a -> Sam      -- finite
-~~~
-
-### Sam to Sig
-
-We can render the `Sam` to `(Sig, Sig)`:
-
-~~~haskell
-renderSam :: D -> Sam -> SE (Sig, Sig)
-renderSam bpm sample = ...
+limSam :: ToSam a => D -> a -> Sam      -- конечный
 ~~~
 
 ---
 
 class: middle
 
-## Let's mix it all
+## Теперь всё вместе
 
 ~~~haskell
 > let drone = toSam $ mean $ fmap (testDrone2 . cpspch) [7.02, 7.09, 8.02, 8.06]
 
 > let drums = sum [...]
 
-> let player = toSam $ atMidiTemp werckmeister harpsichord
+> let player = toSam $ atMidi harpsichord
 
 > let performance = sum [mul 0.74 $ toSam drone, mul 1.2 drums, mul 0.5 player]
 
@@ -656,15 +677,15 @@ class: middle
 
 class: middle
 
-## Let's record our performance live
+## Сделаем запись!
 
-We can record our song live with function:
+Мы можем записать сигнал функцией:
 
 ~~~haskell
 dumpWav :: String -> (Sig, Sig) -> SE (Sig, Sig)
 ~~~
 
-Let's apply it:
+Попробуем:
 
 ~~~haskell
 > vdac $ at (dumpWav "song2.wav") performance
@@ -674,21 +695,21 @@ Let's apply it:
 
 class: middle
 
-## Let's play it back
+## Послушаем
 
-Normal playback:
+В обычном режиме:
 
 ~~~haskell
 > dac $ loopWav 1 "song2.wav"
 ~~~
 
-Let's play in reverse:
+в обратном направлении:
 
 ~~~haskell
 > dac $ loopWav (-1) "song2.wav"
 ~~~
 
-Let's go nuts:
+Вперемешку :)
 
 ~~~haskell
 > dac $ loopWav (constSeq [1, 1, -1, 2, 1] 1) "song2.wav"
@@ -698,161 +719,7 @@ Let's go nuts:
 
 class: middle
 
-## Reusing the recordered audio
-
-How about incorporating it into our performance:
-
-~~~haskell
-vdac $ sum [
-  cfd (usqr 0.25)  
-    (toSam (loopWav (-1) "song2.wav")) 
-    drums, 
-  mul 0.5 player]
-~~~
-
-The crossfade:
-
-~~~haskell
-cfd :: SigSpace a => Sig -> a -> a -> a
-~~~
-
-The unipolar square wave to switch between drums and recordered audio:
-
-~~~haskell
-usqr :: Sig -> Sig
-~~~
-
----
-
-class: middle
-
-## Let's record our performance offline
-
-If we don't have any live parts we can record off-line. 
-
-It can be much faster. Or contain some heavy weight audio processing
-that can not be performed in real-time:
-
-~~~haskell
-writeSnd :: String -> (Sig, Sig) -> IO ()
-~~~
-
-We can use it like this:
-
-~~~haskell
-> writeSnd "drums2.wav" $ fmap (setDur 60) $ runSam (120 * 4) drums
-~~~
-
-With `setDur` we set the duration in seconds of the signal to record.
-
-Note: the `dac` becomes `writeSnd` since we don't want to hear the output in real-time.
-
----
-
-class: middle
-
-## Using UIs to control the volumes
-
-The UI is a pair of `(appearance, behavior)`. 
-
-Let's study applicative UIs:
-
-We have widgets that are sources of control signals. Example: unipolar knob:
-
-~~~
-uknob :: D -> Source Sig
-uknob initValue
-~~~
-
----
-
-class: middle
-
-## Applicative style UIs
-
-We can combine the widgets and control signals with functions:
-
-Simple mapping:
-
-~~~haskell
-lift1 :: (a -> b) -> Source a -> Source b
-~~~
-
-Zip together with `f` and stack widgets horizontally or vertically:
-
-
-~~~haskell
-hlift2, vlift2 :: (a -> b -> c) -> Source a -> Source b -> Source c
-
-hlift3, vlift3 :: (a -> b -> c -> d) -> Source a -> Source b -> Source c -> Source d
-
-...
-~~~
-
-Grouping lists of widgets:
-
-~~~haskell
-hlifts, vlifts :: ([a] -> b) -> Source [a] -> Source b
-~~~
-
----
-
-class: middle
-
-## Simple example
-
-One knob to control the volume:
-
-~~~
- dac $ lift1 (\vol -> mul vol $ testDrone2 220) (uknob 0.5)
-~~~
-
-Two knobs to control center frequency and resonance:
-
-~~~
-dac $ hlift2 (\cfq res -> at (mlp cfq (0.9 * res)) $ testDrone2 220) 
-    (xknob (150, 7000) 2500)  
-    (uknob 0.15)
-~~~
-
-The `xknob` is an exponential slider:
-
-~~~
-xknob (minValue, maxValue) initValue
-~~~
-
----
-
-class: middle
-
-### Let's add a simple mixer to control the volumes:
-
-our individual parts:
-
-~~~haskell
-let drone = ...
-let drums  = ...
-let player = ...
-~~~
-
-mixing parts together:
-
-~~~haskell
-let mixing [total, v1, v2, v3] = mul total $ sum $ 
-    zipWith mul [v1, v2, v3] [drone, drums, player]
-~~~
-
-Four knobs to control the volumes:
-
-~~~haskell
-dac $ hlifts mixing $ fmap uknob [0.7, 0.7, 1, 0.4]
-~~~
-
----
-
-class: middle
-
-## Case study: Vibhu Vibes
+## Пример: Vibhu Vibes
 
 ~~~
 import Csound.Base
@@ -879,33 +746,32 @@ file = "/home/anton/loop.wav"
 
 class: middle
 
-## Glitch: Pulsating noise
+## Глитч: Пульсирующий шум
 
 ~~~
 dac $ mul (sqrSeq [1, 0.5, 0.25] 8) $ pink
 ~~~
 
-Can we substitute pink noise with something more interesting?
-
+Может у нас есть что-то интереснее розового шума?
 
 ---
 
 class: middle
 
-## Glitch: Let's try drum file weird playbacks
+## Глитч: Поиграемся со скоростью воспроизведения
 
 ~~~
 > let file = "/home/anton/loop.wav"
 > dac $ loopWav1 1 file
 ~~~
 
-Let's try in reverse:
+Попробуем перевернуть:
 
 ~~~
 > dac $ loopWav1 (-1) file
 ~~~
 
-Maybe different speeds:
+Может задействуем разные скорости:
 
 ~~~
 > dac $ loopWav1 0.5 file
@@ -917,21 +783,21 @@ Maybe different speeds:
 
 class: middle
 
-## Glitch: Let's try drum file weird playbacks
+## Глитч: сэмпл барабанов с разными скоростями
 
-Let's mess around with changing speed:
+Попробуем внезапно переключать скорости:
 
 ~~~
 > dac $ loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
 ~~~
 
-We can also alter amplitude:
+Мы можем также менять громкость:
 
 ~~~
 > dac $ mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
 ~~~
 
-So here is the basis for our drum pulsating noise:
+Итак у нас есть основа для барабанной партии:
 
 ~~~
 let d1 = loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
@@ -945,9 +811,9 @@ let noisyDrum = sum [d1, d2]
 
 class: middle
 
-## Glitch: Adding pulsar and reverb
+## Глитч: Добавим пульсацию и ревер
 
-As before:
+Как раньше:
 
 ~~~
 let d1 = loopWav1 (-(constSeq [1, 2, 4, 2] 0.5)) file
@@ -957,7 +823,7 @@ let d2 = mul (constSeq [1, 0] 0.5) $ loopWav1 (-0.25) file
 let noisyDrum = sum [d1, d2]
 ~~~
 
-Final glitch:
+С ревером и пульсацией:
 
 ~~~
 glitchy = mixAt 0.2 smallRoom2 $ mul (sqrSeq [1, 0.5, 0.25] 8) noisyDrum
@@ -969,12 +835,11 @@ dac glitchy
 
 class: middle
 
-## Drone
+## Дрон
 
-Main idea: to mix several cool pads from standard collection and
-add a pulsar synchronized with the beat to one of the pads.
+Основная идея: смешать несколько классных падов и добавить пульсацию на одном из них.
 
-Let's try a couple of spacious pads:
+Попробуем несколько падов:
 
 ~~~
 > vdac $ mul 0.5 $ atMidi nightPad
@@ -982,38 +847,15 @@ Let's try a couple of spacious pads:
 > vdac $ mul 0.5 $ atMidi $ deepPad nightPad
 ~~~
 
-We can substitute the `nighPad` with some other pads like: `fmDroneMedium`, `pwPad`, `dreamPad`, `whaleSongPad`.
+Мы можем заменить `nighPad`  на что-то другое: `fmDroneMedium`, `pwPad`, `dreamPad`, `whaleSongPad`.
 
 ---
 
 class: middle
 
-## PADSynth pads
+## Смешаем пады
 
-
-If we have Csound 6.05 or higher we can try out nice pads based on PADSynth algorythm:
-
-~~~
-> vdac $ mul 0.45 $ atMidi $ vibhu 45
-
-> vdac $ mul 0.45 $ atMidi $ prakriti 45
-
-> vdac $ mul 0.45 $ atMidi $ avatara 45
-~~~
-
-There are pads that can crossfade between those pads:
-
-~~~
-> vdac $ mul 0.45 $ atMidi $ vibhuAvatara 65 (uosc 0.25)
-~~~
-
----
-
-class: middle
-
-## Mixing pads
-
-We can experiment to find the right mixture of the PADs
+Поэкспериментируем с разными группами падов:
 
 ~~~
 > vdac $ mul 0.3 $ sum [atMidi dreamPad, atMidi $ deepPad fmDroneMedium]
@@ -1025,9 +867,9 @@ We can experiment to find the right mixture of the PADs
 
 class: middle
 
-## Adding pulsation
+## Добавим пульсацию
 
-We can add another pad and multiply it's output with rhythminc pulsating envelope:
+Мы можем добавить ещё один пад и умножить его на пульсирующий сигнал:
 
 ~~~
 > let pulsar = sawSeq [1, 0.5, 0.25, 0.8, 0.4, 0.1, 0.8, 0.5] 8
@@ -1039,9 +881,9 @@ We can add another pad and multiply it's output with rhythminc pulsating envelop
 
 class: middle
 
-# Final drone
+# Итоговый вариант дрона
 
-Let's try them together:
+Смешаем все три пада
 
 ~~~
 > let p1 = atMidi whaleSongPad
@@ -1057,7 +899,7 @@ Let's try them together:
 
 ---
 
-## Let's put it together
+## Барабаны и дрон
 
 ~~~
 > vdac $ sum [pads, return glitchy]
@@ -1065,331 +907,12 @@ Let's try them together:
 
 ---
 
-.left-column[
-## Basic types
-]
+class: middle
 
-.right-column[
-### Signals: `Sig`
-
-Stream of floats.
-
-### Constants: `D`
-
-Constant numbers. Numbers for instant messages (notes, key-presses)
-
-### 1D arrays: `Tab`
-
-1D arrays for storing waveshapes, audio files.
-
-### Side effects: `SE`
-
-It's `IO`-monad for our library.
-]
-
----
-
-## Signals: Sig
-
-Stream of floats that represent audio signal or control signal.
-
-
-* Audio waves:
-
-~~~haskell
-> dac $ osc 220
-~~~
-
-* Control signals (envelopes, LFOs)
-
-~~~haskell
-> dac $ linseg [0, 0.5, 1, 2.5, 0] * osc 220
-~~~
-
-* Can be used like numbers (support basic arithmetics):
-
-~~~haskell
-> dac $ osc $ 220 + linseg [0, 2, 220, 4, 0]
-~~~
-
----
-
-## Constant numbers: `D`
-
-Constant floats. Used for initial arguments that can not change:
-
-Example: Attack Decay Sustain release envelope:
-
-~~~haskell
-leg :: D -> D -> D -> D -> Sig
-leg attack decay sustain release = envelope
-~~~
-
-Shaping the sine amplitude:
-
-~~~haskell
-dac $ leg 0.3 0.5 0.3 0.2 * osc 220
-~~~
-
----
-
-# Constant numbers: `D` as notes
-
-Used for representing a note data (velocity, frequency). 
-
-~~~haskell
-instrument :: (D, D) -> Sig
-instrument (amplitude, frequency) = sig amplitude * osc (sig frequency)
-~~~
-
-Important function: `sig` converts constants to signals tt hold the value.
-
-~~~haskell
-> sig :: D -> Sig
-~~~
-
----
-
-## 1D arrays for waveshapes: `Tab`  
-
-
-Most frequently we use `Tab` to hold wave shapes:
-
-### Harmonics:
-
-~~~haskell
-dac $ oscBy (sines [1, 0, 0.5, 0.25, 0.1]) 220
-~~~
-
-### Read audio file to table:
-
-~~~haskell
-let file = wavLeft "file.wav"
-~~~
-
----
-
-## Side effects
-
-Random values, procedures, UI-widgets,  reading user inputs, creation of midi instruments
-
-~~~haskell
-class Monad SE where
-~~~
-
-White and pink noise:
-
-~~~haskell
-white, pink :: SE Sig
-~~~
-
-
-### Example 
-
-Filtered white noise:
-
-~~~
-> dac $ fmap (mlp (2500 * uosc 0.1 * uosc 2) 0.2) white
-~~~
-
-`mlp` -- emulation of moog low-pass filter.
-
----
-
-.left-column[
-## Sound design basics
-]
-
-.right-column[
-### Audio waves:
-
-Pure sine, square, sawtooth, triangle:
-
-~~~haskell
-osc, sqr, saw, tri :: Sig -> Sig
-
-osc frequency = wave
-~~~
-
-### Filters:
-
-Moog low pass filter:
-
-~~~haskell
-mlp :: Sig -> Sig -> Sig -> Sig
-mlp cutoffFrequency resonance asignal = ..
-~~~
-]
-
----
-
-.left-column[
-## Sound design basics
-]
-
-.right-column[
-## Envelope generators
-
-ADSR or attack, decay, sustain release:
-
-~~~haskell
-leg, xeg :: D -> D -> D -> D -> Sig
-
-leg att dec sust rel = envelope
-~~~
-
-* `leg` - Linear Envelope Generator
-
-* `xeg` - eXponential Envelope Generator
-]
+## Спасибо за внимание!
 
 
 ---
-
-.left-column[
-## Sound design basics
-]
-
-.right-column[
-## Low frequency oscillators:
-
-Audio waves with low frequencies (0 to 20 Hz).
-
-Audio waves with low frequencies (0 to 20 Hz).
-
-Bipolar: range from -1 to 1: `osc`, `sqr`, `saw`, `tri`
-
-Unipolar: range from 0 to 1: `uosc`, `usqr`, `usaw`, `utri`
-
-]
-
----
-
-.left-column[
-## Sound design basics
-]
-
-.right-column[
-
-## Examples:
-
-Filter with LFO
-
-~~~haskell
-> dac $ mlp (200 + 1500 * uosc 2) 0.2 $ saw 220
-~~~
-
-Envelope for filter and amplitude:
-
-~~~haskell
-> let env = leg 0.3 0.5 0.4 1.2
-> dac $ env * mlp (200 + 1500 * env) 0.2 $ saw 220
-~~~
-]
-
----
-
-.left-column[
-## Sound design basics
-]
-
-.right-column[
-## Fancy envelopes:
-
-~~~haskell
-constSeq :: [Sig] -> Sig -> Sig
-~~~
-
-picture
-
-~~~haskell
-sqrSeq :: [Sig] -> Sig -> Sig
-~~~
-
-~~~haskell
-sawSeq :: [Sig] -> Sig -> Sig
-~~~
-]
-
----
-
-.left-column[
-## Sound design basics
-]
-
-.right-column[
-## Arpeggiator
-
-~~~ haskell
-> let cps = costSeq (fmap (220 *) [1, 9/8, 5/4, 3/2]) 4
-
-> dac $ mlp (2500 * uosc 0.1) 0.1 $ saw cps
-~~~
-]
-
-Let's add some fancy pulse:
-
-~~~haskell
-> let res = mlp (2500 * uosc 0.1) 0.1 $ saw cps
-
-> let pulsar = sqrSeq [1, 0.5, 0.25, 0.8, 0.4, 0.2, 0.9, 0.4] 8
-
-> dac $ pulsar * res
-~~~
-
----
-
-.left-column[
-## Useful generic functions
-]
-
-.right-column[
-### `mul` - volume control
-
-Scales anything that contains signals with a signal.
-Useful for generic volume control:
-
-~~~haskell
-> dac $ mul 0.5 $ sqr 220                -- Sig
-	
-> dac $ mul 0.25 $ pink                  -- SE Sig
-
-> dac $ mul 0.4 (tri 220, tri 224)       -- (Sig, Sig)
-
-> vdac $ atMidi $ mul 0.2 flute          -- Patch (Sig, Sig) 
-
-> dac $ mul 0.4 $ loop $ wav "beat.wav"  -- Sam
-~~~
-]
-
----
-
-.left-column[
-## Useful generic functions
-]
-
-.right-column[
-
-### `at` - signal transformation
-
-`At` transformes anything that contains signal with `Sig -> Sig` like function:
-
-~~~haskell
-> let f = mlp 1500 0.1
-
-> dac $ at f $ sqr 220
-
-> dac $ at f $ pink
-~~~
-
-### `mixAt` - signal transformation with dry/wet mix
-
-~~~haskell
-> dac $ mixAt 0.25 largeHall2 $ fromMono $ tri 110
-~~~
-]
-
-
 
     </textarea>
     <script src="remark/remark-latest.min.js">
