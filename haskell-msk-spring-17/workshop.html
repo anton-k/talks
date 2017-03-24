@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+      .image-95 img {
+        width: 95%;
+        height: 95%;
+      }
+
+      .image-110 img {
+        width: 60%;
+        height: 60%;
+      }
+
+      .image-50 img {
+  		width: 50%;
+  		height: 50%;
+	  }
+
+	  .image-35 img {
+  		width: 35%;
+  		height: 35%;
+	  }
+
+	  .green {
+	  	color: green;
+	  }
+
+	  .image-45 img {
+  		width: 45%;
+  		height: 45%;
+	  }
+
+	  .image-25 img {
+  		width: 25%;
+  		height: 25%;
+	  }
+
+      .image-15 img {
+        width: 15%;
+        height: 15%;
+      }      
+
+	   /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Если нельзя писать на Haskell, 
+
+## но очень хочется
+
+Антон Холомьёв. ruHaskell -- Весна 2017
+
+---
+
+class: center, middle
+
+## Субъективно: это не модно
+
+.image-95[.center[![Рэйтинг языков](images/language-rates.png)]]
+
+---
+
+class: center, middle
+
+## Субъективно: мой босс против
+
+
+.image-110[.center[![Жабабосс](images/super-java.jpeg)]]
+
+---
+
+class: center, middle
+
+## Объективно: Нет Hard Real-time
+
+.image-110[.center[![Слоупок](images/not-fast.jpg)]]
+
+---
+
+class: center, middle
+
+## Объективно: Неразвитость библиотек в проблемной области
+
+.image-95[.center[![Слоупок](images/kids.png)]]
+
+---
+
+class: center, middle
+
+## Задача: Построить OSC контроллер
+
+
+.image-95[.center[![Touch-OSC](images/touch-osc.jpg)]]
+
+---
+
+class: center, middle
+
+# Haskell: GUI
+
+.image-75[.center[![Touch-OSC](images/really-cat.jpeg)]]
+
+---
+
+class: center, middle
+
+## Scala приходит на помощь
+
+.image-75[.center[![Touch-OSC](images/true-friends.jpg)]]
+
+---
+
+## Оновная идея
+
+
+* Написать достаточно гибкий интерпретатор для задачи
+
+* Генерить код из Haskell
+
+.image-65[.center[![Touch-OSC](images/browsers.jpg)]]
+
+
+---
+
+class: middle, center
+
+##  Схема решения
+
+TODO
+
+---
+
+class: middle
+
+## Пишем на Scala интерпретатор
+
+* Написан конструктор OSC-приложений dragon-osc
+
+* Принимает описание UI в JSON
+
+вставить картинку с тем как выглядят контролы
+
+---
+
+class: middle
+
+## C помощью aeson пишем либу для генерации конфиг файлов
+
+
+~~~Haskell
+
+put some haskell code here
+
+~~~
+
+---
+
+class: middle
+
+## На это либе описываем наш конкретный случай
+
+
+~~~Haskell
+
+put some haskell code here
+
+~~~
+
+---
+
+class: middle
+
+## Пример приложения
+
+Картинка с приложением
+
+---
+
+class: middle
+
+## Haskell код для GUI: 1
+
+~~~haskell
+
+put some haskell code here
+
+~~~
+
+---
+
+class: middle
+
+## Аналоги
+
+* ???
+
+* ???
+
+* ???
+
+---
+
+class: middle
+
+## Спасибо за внимание!
+
+~~~
+    github      : anton-k
+
+    email       : anton.kholomiov@gmail.com
+~~~
+
+    </textarea>
+    <script src="remark/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create({
+        ratio: "4:3",
+        highlightLanguage: 'haskell',
+        slideNumberFormat: function (current, total) {
+            return (current != 1) ? (current-1) : '';
+        }
+      });
+    </script>
+  </body>
+</html>
