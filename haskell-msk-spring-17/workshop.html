@@ -30,10 +30,26 @@
         height: 60%;
       }
 
+      .image-60 img {
+        width: 60%;
+        height: 60%;
+      }
+
+
       .image-50 img {
   		width: 50%;
   		height: 50%;
 	  }
+
+      .image-85 img {
+        width: 85%;
+        height: 85%;
+      }
+
+      .image-75 img {
+        width: 75%;
+        height: 75%;
+      }
 
 	  .image-35 img {
   		width: 35%;
@@ -59,10 +75,15 @@
         height: 15%;
       }      
 
-	   /* Two-column layout */
+      .image-105 img {
+        width: 105%;
+        height: 105%;
+      } 
+
+       /* Two-column layout */
       .left-column {
         color: #777;
-        width: 20%;
+        width: 30%;
         height: 92%;
         float: left;
       }
@@ -70,7 +91,7 @@
           color: #000;
         }
       .right-column {
-        width: 75%;
+        width: 65%;
         float: right;
         padding-top: 1em;
       }
@@ -81,11 +102,16 @@
 
 class: center, middle
 
-# Если нельзя писать на Haskell, 
-
-## но очень хочется
-
+.left-column[
 Антон Холомьёв. ruHaskell -- Весна 2017
+
+### Если нельзя писать на Haskell, но очень хочется
+
+]
+
+.right-column[
+.image-60[.center[![Цветок](images/flower-2.jpeg)]]
+]
 
 ---
 
@@ -139,31 +165,57 @@ class: center, middle
 
 ---
 
-class: center, middle
+class: middle
 
-## Scala приходит на помощь
+.center[## Scala приходит на помощь]
+
+Воспользуемся библиотекой swing.
+
+* Стабильная
+
+* Полноценная
+
+* Много примеров 
 
 .image-75[.center[![Touch-OSC](images/true-friends.jpg)]]
 
 ---
 
+class: middle
+
 ## Оновная идея
 
+
+* Аналогия: Браузер как интерпретатор, HTML - как DSL для задачи
+
+.image-65[.center[![Touch-OSC](images/browsers-2.png)]]
 
 * Написать достаточно гибкий интерпретатор для задачи
 
 * Генерить код из Haskell
 
-.image-65[.center[![Touch-OSC](images/browsers.jpg)]]
-
 
 ---
 
-class: middle, center
+class: middle
 
 ##  Схема решения
 
-TODO
+* Scala приложение превращает JSON в приложение
+
+.center[
+~~~
+dragonOsc :: JSON -> IO App
+~~~
+]
+
+* Haskell библиотека генерит JSON из удобного описания
+
+.center[
+~~~
+render :: UI -> JSON
+~~~
+]
 
 ---
 
@@ -175,53 +227,137 @@ class: middle
 
 * Принимает описание UI в JSON
 
-вставить картинку с тем как выглядят контролы
+.image-75[.center[![Touch-OSC](images/haunted-screen-2.png)]]
 
 ---
 
 class: middle
 
-## C помощью aeson пишем либу для генерации конфиг файлов
+### На aeson пишем обёртку вокруг JSON
 
 
 ~~~Haskell
+data Root = Root {               -- Приложение
 
-put some haskell code here
+    rootWindows :: [Window],     --   * набор окон    
 
+    rootKeys :: Keys,            --   * горячие клавиши
+
+    rootInitOsc :: [Msg]         --   * команды OSC при старте
+}
+
+
+
+data Window = Window {           -- Окно 
+
+    windowTitle :: String,       --   * Заголовок
+
+    windowSize :: Maybe Size,    --   * Размер
+
+    windowContent :: Ui,         --   * Виджеты окна
+
+    windowKeys :: Keys           --   * горячие клавиши
+}
 ~~~
 
 ---
 
 class: middle
 
-## На это либе описываем наш конкретный случай
+### На aeson пишем обёртку вокруг JSON
 
+~~~
+data Ui = Ui {                   -- Виджет
+    uiSym :: Sym                 --   * контролы
+    uiParam :: Param             --   * доп параметры
+}
 
-~~~Haskell
-
-put some haskell code here
-
+data Param = Param {              -- Параметры
+    { paramId   :: Maybe String   --   * Идентификатор 
+    , paramSend :: Maybe Send     --   * Посылаемые сообщения
+}
+ 
+data Sym =
+      Hor [Ui]                    -- горизонтальный контейнер
+    | Ver [Ui]                    -- вертикальный контейнер
+    | Dial Float Color            -- крутилка
+    | HFader Float Color          -- слайдер
+    | Button String               -- кнопка
+    ....
 ~~~
 
 ---
 
 class: middle
 
-## Пример приложения
+### Термины
 
-Картинка с приложением
+* **OSC** - протокол управления приложениями (синтезаторами)
+
+    * есть путь `"/path/to/value"`
+
+    * набор значений  `1`, `true`, `"play"`
+
+* **JACK** - API для обмена аудио сигналами между приложениями
+
+    Если приложение поддерживает JACK, то мы можем направить аудио
+    поток в любое другое JACK-приложение
+
+---
+
+class: middle, center
+
+### Пример приложения
+
+.image-105[.center[![Touch-OSC](images/app-example.png)]]
 
 ---
 
 class: middle
 
-## Haskell код для GUI: 1
+### Пример кода
 
 ~~~haskell
+module Ui where
 
-put some haskell code here
+import Dragon.Osc
+import Pages
+
+main = writeJson "ui.json" root
+
+root = Root [mainWindow] [] []
+
+mainWindow = Window 
+    { windowTitle = "amby" 
+    , windowSize = Just (500, 300)
+    , windowContent = ui (Tabs pages)
+    , windowKeys = [] }
+
+pages = [
+    mixerPage, flowPage, hauntedPage, noiserPage, 
+    bassPage, syntPage, loopPage, padListPage]
+~~~
+
+---
+
+class: middle
+
+### Пример кода
 
 ~~~
+module Pages.Flow where
+
+import Dragon.Osc
+
+flowPage = Page "flow"  flowUi flowKeys
+
+flowUi = setOsc $ ui (XYPad (0.5, 0.5) "olive")
+    where setOsc = setMsg (Msg "quad-flow" "/xy" [Arg 0, Arg 1])
+
+flowKeys = []
+~~~
+
+.image-50[.center[![Touch-OSC](images/flow-screen.png)]]
 
 ---
 
@@ -235,6 +371,20 @@ class: middle
 
 * ??? 
 
+---
+
+class: middle
+
+### Командная разработка
+
+У нас есть три команды разработиков
+
+* Одна команда пишет интерпретатор 
+
+* Другая команда пишет EDSL на Haskell
+
+* Специалисты в проблемной области на EDSL
+    
 
 ---
 
@@ -242,11 +392,13 @@ class: middle
 
 ## Аналоги
 
-* ???
+* **Atom**    -- генератор FSM на С-коде
 
-* ???
+* **Ivory**   -- генератор С-кода
 
-* ???
+* **Tidal-cycles**   -- язык для лайвкодинга музыки
+
+* **blaze-html / lucid** -- код для браузера
 
 ---
 
