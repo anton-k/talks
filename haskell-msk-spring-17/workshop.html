@@ -82,7 +82,7 @@
 
        /* Two-column layout */
       .left-column {
-        color: #777;
+        color: #001f3f;
         width: 30%;
         height: 92%;
         float: left;
@@ -95,6 +95,23 @@
         float: right;
         padding-top: 1em;
       }
+
+
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #555555;
+    text-align: center;
+    padding: 14px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}      
     </style>
   </head>
   <body>
@@ -103,9 +120,12 @@
 class: center, middle
 
 .left-column[
-Антон Холомьёв. ruHaskell -- Весна 2017
+## Если нельзя писать на Haskell, но очень хочется
 
-### Если нельзя писать на Haskell, но очень хочется
+Антон Холомьёв. 
+
+ruHaskell - Весна 2017
+
 
 ]
 
@@ -157,11 +177,32 @@ class: center, middle
 
 ---
 
+class: middle
+
+## Термины
+
+* **OSC** - протокол управления приложениями (синтезаторами)
+
+    * есть путь `"/path/to/value"`
+
+    * набор значений  `1`, `true`, `"play"`
+
+    Пример:  задать на 2м треке громкость 0.5
+
+        "/track/set-volume"  2   0.5
+
+* **JACK** - API и сервер для обмена аудио сигналами между приложениями
+
+    Если приложение поддерживает JACK, то мы можем направить аудио
+    поток в любое другое JACK-приложение
+
+---
+
 class: center, middle
 
 # Haskell: GUI
 
-.image-75[.center[![Touch-OSC](images/really-cat.jpeg)]]
+.image-65[.center[![Touch-OSC](images/really-cat.jpeg)]]
 
 ---
 
@@ -169,6 +210,7 @@ class: middle
 
 .center[## Scala приходит на помощь]
 
+.left-column[
 Воспользуемся библиотекой swing.
 
 * Стабильная
@@ -176,8 +218,13 @@ class: middle
 * Полноценная
 
 * Много примеров 
+]
 
-.image-75[.center[![Touch-OSC](images/true-friends.jpg)]]
+.right-column[
+
+.image-85[.center[![Touch-OSC](images/true-friends.jpg)]]
+
+]
 
 ---
 
@@ -185,15 +232,17 @@ class: middle
 
 ## Оновная идея
 
-
+.left-column[
 * Аналогия: Браузер как интерпретатор, HTML - как DSL для задачи
-
-.image-65[.center[![Touch-OSC](images/browsers-2.png)]]
 
 * Написать достаточно гибкий интерпретатор для задачи
 
 * Генерить код из Haskell
+]
 
+.right-column[
+.image-65[.center[![Touch-OSC](images/browsers-2.png)]]
+]
 
 ---
 
@@ -233,7 +282,7 @@ class: middle
 
 class: middle
 
-### На aeson пишем обёртку вокруг JSON
+## На aeson пишем обёртку вокруг JSON
 
 
 ~~~Haskell
@@ -264,7 +313,7 @@ data Window = Window {           -- Окно
 
 class: middle
 
-### На aeson пишем обёртку вокруг JSON
+## На aeson пишем обёртку вокруг JSON
 
 ~~~
 data Ui = Ui {                   -- Виджет
@@ -282,32 +331,16 @@ data Sym =
     | Ver [Ui]                    -- вертикальный контейнер
     | Dial Float Color            -- крутилка
     | HFader Float Color          -- слайдер
+    | VFader Float Color          -- 
     | Button String               -- кнопка
     ....
 ~~~
 
 ---
 
-class: middle
-
-### Термины
-
-* **OSC** - протокол управления приложениями (синтезаторами)
-
-    * есть путь `"/path/to/value"`
-
-    * набор значений  `1`, `true`, `"play"`
-
-* **JACK** - API для обмена аудио сигналами между приложениями
-
-    Если приложение поддерживает JACK, то мы можем направить аудио
-    поток в любое другое JACK-приложение
-
----
-
 class: middle, center
 
-### Пример приложения
+## Пример приложения
 
 .image-105[.center[![Touch-OSC](images/app-example.png)]]
 
@@ -315,7 +348,7 @@ class: middle, center
 
 class: middle
 
-### Пример кода
+## Пример кода
 
 ~~~haskell
 module Ui where
@@ -342,7 +375,7 @@ pages = [
 
 class: middle
 
-### Пример кода
+## Пример кода
 
 ~~~
 module Pages.Flow where
@@ -365,17 +398,60 @@ class: middle
 
 ## Особенности подхода
 
-* найти ядро основных функций
+* JSON генерится очень быстро. Мы можем объединить всё одно Haskell-приложение,
 
-* баланс гибкости / сложности
+    * генерим JSON
 
-* ??? 
+    * скармливаем его интерпретатору (System.Process)   
+
+* найти ядро основных функций и остальные выразить через Haskell
 
 ---
 
 class: middle
 
-### Командная разработка
+## Минимализм в интерпретаторе
+
+## выразительность в Haskell
+
+~~~haskell
+multiUi :: (Int, Int) -> (Int -> Ui) -> Ui
+multiUi (sizeX, sizeY)  maker = ....
+~~~
+
+.left-column[
+В примитивах есть только горизонтальный и вертикальный контейнер виджетов.
+
+Контейнер для матрицы виджетов мы можем написать уже в Haskell.
+]
+
+.right-column[
+<table>
+    <tr>
+        <td>UI(0)</td>
+        <td>UI(1)</td>
+        <td>UI(2)</td>        
+    </tr>
+    <tr>
+        <td>UI(3)</td>
+        <td>UI(4)</td>
+        <td>UI(5)</td>               
+    </tr>
+
+    <tr>
+        <td>UI(6)</td>
+        <td>UI(7)</td>
+        <td>UI(8)</td>               
+    </tr>
+
+</table>
+]
+
+---
+
+class: middle
+
+## Командная разработка
 
 У нас есть три команды разработиков
 
@@ -392,25 +468,37 @@ class: middle
 
 ## Аналоги
 
-* **Atom**    -- генератор FSM на С-коде
+* **Atom**    -- генератор hard-real-time FSM на С-коде
 
-* **Ivory**   -- генератор С-кода
-
-* **Tidal-cycles**   -- язык для лайвкодинга музыки
+* **Tidal-cycles**   -- язык для лайвкодинга музыки. 
+    
+    Интерпретатор Dirt написан на С. Из Haskell подаются OSC-сообщения.
 
 * **blaze-html / lucid** -- код для браузера
+
+    Интерпретатор - браузер.
 
 ---
 
 class: middle
 
+.left-column[
+
+.center[![Namaskar](images/namaste-2.gif)]
+
+]
+
+
+.right-column[
 ## Спасибо за внимание!
 
 ~~~
-    github      : anton-k
+github      : anton-k
 
-    email       : anton.kholomiov@gmail.com
+email       : anton.kholomiov@gmail.com
 ~~~
+]
+
 
     </textarea>
     <script src="remark/remark-latest.min.js">
