@@ -1,0 +1,954 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+      .image-60 img {
+        width: 60%;
+        height: 60%;
+      }
+
+      .image-75 img {
+        width: 75%;
+        height: 75%;
+      }
+
+      .image-85 img {
+        width: 85%;
+        height: 85%;
+      }
+
+
+      .image-95 img {
+        width: 95%;
+        height: 95%;
+      }
+
+      .image-50 img {
+  		width: 50%;
+  		height: 50%;
+	  }
+
+	  .image-35 img {
+  		width: 35%;
+  		height: 35%;
+	  }
+
+	  .green {
+	  	color: green;
+	  }
+
+    .red {
+      color: red;
+    }
+
+
+    .header-image img {
+      width: 80%;
+      height: 40%;
+    }
+
+	  .image-45 img {
+  		width: 45%;
+  		height: 45%;
+	  }
+
+    .image-kot-45 img {
+      width: 45%;
+      height: 45%;
+      margin-bottom: 5%;
+    }
+
+	  .image-25 img {
+  		width: 25%;
+  		height: 25%;
+	  }
+
+      .image-15 img {
+        width: 15%;
+        height: 15%;
+      }
+
+      .image-10 img {
+        width: 10%;
+        height: 10%;
+      }
+
+	   /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+
+
+     /* Two-column layout */
+      .left-column-middle {
+        color: #567;
+        width: 48%;
+        /* height: 92%;*/
+        float: left;
+      }
+      .right-column-middle {
+        width: 48%;
+        float: right;
+      }
+
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Язык Kotlin - остров сокровищ
+
+## для ФП на Android
+
+.header-image[.center[![Pure sine wave](pictures/flying-island-3.jpg)]]
+
+Антон Холомьёв. FPconf 2017
+
+---
+
+class: left, middle
+
+## Мотивация: написать Android app
+
+## на любимом ФП языке
+
+.image-75[.center[![Pure sine wave](pictures/lambda-andy.png)]]
+
+---
+
+class: left, middle
+
+## Доступные опции -- Java 6
+
+
+* нет функций высшего порядка
+
+* нет сумм типов
+
+* нет удобных средств работы с коллекциями
+
+* многословный синтаксис
+
+* изменяемое состояние
+
+* Hello NPE
+
+.image-45[.center[![Pure sine wave](pictures/trollo-enough-2.jpg)]]
+
+---
+
+class: center, middle
+
+# Я честно пробовал, но
+
+.image-95[.center[![Pure sine wave](pictures/npe-story.png)]]
+
+---
+
+## Android + Haskell
+
+.left-column-middle[
+### .green[Хорошо]
+
+* Наиболее близок к ФП
+
+   труЪ вэйЪ
+
+* Есть истории успешного применения: magic cookies
+
+* Используются продвинутые техники UI-приложений: FRP
+]
+
+.right-column-middle[
+###   .red[Реалии]
+
+* Сложно собрать кросс-компилятор
+
+* Нет примеров, обучающих статей
+
+  только несколько исходников тривиальных проектов
+
+* не все библиотеки поддерживаются
+
+* очень медленная сборка проектов
+]
+
+---
+
+## Android + Scala
+
+.left-column-middle[
+### .green[Хорошо]
+
+* ООП язык с сильной поддержкой ФП
+
+  не труЪ, но в стиле ФП на нём писать удобно
+
+* Работает на JVM, должен быть близок к Android
+
+* Уже есть развитые библиотеки под Android
+
+   Scaloid, Macroid
+]
+
+.right-column-middle[
+###   .red[Реалии]
+
+* Scala не помещается в Android
+
+* Можно решить с помощью Proguard
+
+  урезает проект, оставляет только нужные классы
+
+* всё это приводит к сложной настройке проекта и медленной сборке,
+
+  инструкции быстро меняются, статьи устаревают
+
+]
+
+---
+
+## Итоги: Android + корифеи FP
+
+
+.left-column-middle[
+### .green[Haskell]
+
+* мало статей, по которым можно разобраться
+
+* сложно настроить проект, собрать все средства
+
+]
+
+.right-column-middle[
+###   .red[Scala]
+
+* Scala не помещается в Android
+
+* Статьи, библиотеки есть, но они быстро устаревают
+
+
+* сложно настроить проект
+
+* нет ощущения стабильности
+
+]
+
+---
+
+class: middle
+
+
+.image-kot-45[.center[![Pure sine wave](pictures/kotlin-logo-2.png)]]
+
+* Новый язык на платформе JVM
+
+* Статически-типизированный язык с **выводом типов**
+
+* **Поддержка ФП парадигмы**
+
+   * Функции высших порядков
+
+   * Суммы типов
+
+   * Удобная работа с коллекциями
+
+   * ... etc ...
+
+* Строгая модель вычислений
+
+---
+
+class: middle
+
+.left-column[
+  .image-85[.center[![Pure sine wave](pictures/kotlin-android.jpg)]]
+]
+
+.right-column[
+## Kotlin - новый игрок на Android платформе
+
+* Много хороших обучающих статей, примеров .green[**под Android**]
+
+* Есть библиотеки специально под Android
+
+* Легковесный
+
+* Быстро компилируемый
+
+* Сильная поддержка в Android Studio - основная IDE
+
+* Удобный импорт существующих Java-решений
+]
+
+---
+
+class: middle
+
+## Equilibrix -  Аркада на Kotlin
+
+* Почти дословный перевод игры, написанной на Haskell
+
+* LOK:
+
+    * Haskell - 750 (набросок)
+
+    * Kotlin - 1340 (завершённая версия)
+
+.image-75[.center[![Картинка](pictures/equilibrix-screen.png)]]
+
+
+---
+
+class: center, middle
+
+.image-50[.center[![Картинка](pictures/logos-3.png)]]
+
+.image-85[.center[![Картинка](pictures/lang-cmp.png)]]
+
+
+---
+
+class: middle
+
+## Функции
+
+
+.left-column-middle[
+
+## Kotlin
+
+~~~kotlin
+fun energy(m: Float, c: Float) =
+  m * (c ^ 2)
+~~~
+
+]
+
+.right-column-middle[
+
+## Haskell
+
+~~~haskell
+energy :: Float -> Float -> Float
+energy m c = m * (c ^ 2)
+~~~
+
+]
+
+---
+
+class: middle
+
+## Алгебраические типы данных
+
+
+.left-column-middle[
+
+## Kotlin
+
+~~~kotlin
+data class Point(
+  val px: Float,
+  val py: Float
+)
+~~~
+
+~~~kotlin
+sealed class Shape {
+
+  data class Rectangle(
+    val width: Float,
+    val height Float
+  ): Shape()
+
+  data class Circle(
+    val center: Point,
+    val radius: Float
+  ): Shape()
+}
+~~~
+]
+
+.right-column-middle[
+
+## Haskell
+
+~~~haskell
+data Point = Point {
+  px: Float,
+  py: Float
+}
+~~~
+
+~~~haskell
+data Shape =
+    Rectangle {
+      rectWidth:  Float,
+      rectHeight: Float }
+  | Circle {
+      circleCenter: Point,
+      circleRadius: Float }
+~~~
+]
+
+---
+
+class: middle
+
+## Сопоставление с образцом
+
+.left-column-middle[
+
+## Kotlin
+
+~~~kotlin
+fun area(shape: Shape) =
+  when (shape) {
+    is Shape.Rectangle ->
+      shape.width * shape.height
+    is Shape.Circle ->
+      Math.pi * shape.radius ^ 2
+  }
+~~~
+]
+
+.right-column-middle[
+
+## Haskell
+
+~~~haskell
+area :: Shape -> Float
+area shape = case shape of
+  Rectangle w h -> w * h
+  Circle _ rad  -> pi * rad ^ 2
+~~~
+]
+
+---
+
+class: middle
+
+## Работа с коллекциями
+
+.left-column-middle[
+
+## Kotlin
+
+~~~kotlin
+list.map   { x -> square(x)
+   }.filter{ x -> isOdd(x)
+   }.take(5)
+~~~
+
+]
+
+.right-column-middle[
+
+## Haskell
+
+~~~haskell
+take 5 (
+  filter isOdd (
+    map square list
+  ))
+~~~
+
+]
+
+---
+
+class: middle
+
+## Работа с коллекциями
+
+.left-column-middle[
+
+## Kotlin
+
+Наивный перевод:
+
+~~~kotlin
+list.map   { x -> square(x)
+   }.filter{ x -> isOdd(x)
+   }.take(5)
+~~~
+
+Ленивый перевод (нет промежуточных списков):
+
+
+~~~kotlin
+list.asSequence()
+    .map   { x -> square(x)
+   }.filter{ x -> isOdd(x)
+   }.take(5)
+    .toList()
+~~~
+
+]
+
+.right-column-middle[
+
+## Haskell
+
+~~~haskell
+take 5 (
+  filter isOdd (
+    map square list
+  ))
+~~~
+
+]
+
+---
+
+class: middle
+
+## Монады
+
+Пришлось переписать через вызов рекурсивных функций,
+
+в Haskell было через `State`.
+
+
+.left-column-middle[
+## Kotlin
+
+~~~kotlin
+???
+~~~
+
+* Есть funktionale - библиотека
+   функциональных фишек для Kotlin
+
+  но она не на уровне Control.Monad или scalaz
+]
+
+.right-column-middle[
+## Haskell
+
+~~~haskell
+class Monad m where
+  return :: a -> m a
+  bind   :: m a -> (a -> m b) -> m b
+~~~
+
+
+~~~haskell
+mapM :: Monad m
+  => (a -> m b) -> [a] -> m [b]
+~~~
+]
+
+---
+
+class: middle
+
+## Kategory - арсенал FP (scalaz для Kotlin)
+
+Страница:  http://kategory.io
+
+Проект в разработке.
+
+* Типы: `Option`, `Either`, `State`, `Reader`, `Writer`,
+
+    + трансформеры: `OptionT`, `ReaderT`
+
+
+* Эффекты: `IO`, `Async`
+
+* Классы типов: `Monoid`, `Functor`, `Applicative`, `Monad`, `Traverse` ...
+
+---
+
+class: middle
+
+## Примеры: Functor
+
+~~~kotlin
+HK<F, A> == F<A>   // HK -- Higher Kinded
+
+interface Functor<F> : Typeclass {
+    fun <A, B> map(fa: HK<F, A>, f: (A) -> B): HK<F, B>
+}
+~~~
+
+~~~kotlin
+inline fun <reified F>
+  mul2( fa: HK<F, Int>
+      , FT: Functor<F> = functor()
+      ): HK<F, Int>
+  = FT.map(fa, { it * 2 })
+
+mul2<OptionHK>(Option(1)) // Option(1)
+mul2<TryHK>(Try { 1 })
+~~~
+
+---
+
+class: middle
+
+## Do-нотация в Kotlin
+
+.left-column-middle[
+
+### Kotlin
+
+~~~kotlin
+Option.monad().binding {
+   val a = Option(1).bind()
+   val b = Option(1 + a).bind()
+   val c = Option(1 + b).bind()
+   yields(a + b + c)
+}
+~~~
+
+]
+
+.right-column-middle[
+
+### Haskell
+
+~~~Haskell
+do
+  a <- Just 1
+  b <- Just (1 + a)
+  c <- Just (1 + b)
+  return (a + b + c)
+~~~
+]
+
+---
+
+class: middle
+
+## Нет NullPointerException
+
+Подход Kotlin к null'ам
+
+~~~kotlin
+val s1: String   = "never null"
+val s2: String?  = null          // обратите внимание на знак ?
+
+s1.length()                      //  всё хорошо
+s2.length()                      // !! compile-time error!!
+
+if (s2 != null) {
+  s2.length()                    // а так работает
+}
+~~~
+
+---
+
+class: middle
+
+## Примеры с Nullable типом
+
+
+.left-column-middle[
+## Kotlin
+
+~~~kotlin
+s?.length()
+
+s?.length() ?: 0
+
+s!!  // Throws NPE if null
+~~~
+
+]
+
+.right-column-middle[
+## Haskell
+
+~~~
+ fmap length s
+
+ maybe 0 id (fmap length s)
+
+ fromJust s  -- Throws Exception
+             -- if Nothing
+~~~
+
+]
+
+---
+
+class: middle
+
+## Примеры с Nullable типом
+
+
+.left-column-middle[
+## Kotlin
+
+~~~kotlin
+s?.method?.anotherMethod
+
+???
+~~~
+
+Преимущество: легковесный
+
+нет оверхеда при использовании
+
+]
+
+.right-column-middle[
+## Haskell
+
+~~~
+  s >>= fun >>= anotherFun
+
+  f <$> ma <*> mb
+~~~
+
+Преимущество: поддерживает `Applicative`, `Monad`, `Monoid`, ...
+
+много удобных продвинутых функций из коробки
+]
+
+---
+
+class: middle
+
+## NPE угрожает, когда переиспользуем Java
+
+методы Java возвращают специальный тип
+
+`Type!` - nullable или нет на усмотрение пользователя
+
+Для избежания NPE необходимо явно указать тип
+значения
+
+---
+
+class: middle
+
+.left-column[
+.image-95[.center[![Pure sine wave](pictures/android-studio-logo.jpg)]]
+
+.image-95[.center[![Pure sine wave](pictures/jet-brains-logo.png)]]
+]
+
+.right-column[
+
+## Поддержка IDE
+
+
+* исправляет Java код в Kotlin
+
+* легко учиться по примерам
+
+* из коробки Kotlin проекты в Android Studio
+
+
+]
+---
+
+class: middle
+
+.left-column[
+  .image-85[.center[![Pure sine wave](pictures/java-logo.png)]]
+]
+
+.right-column[
+
+## Поддержка Java
+
+
+Пример кода для работы с физическим движком
+
+~~~kotlin
+var body = world.createBody(bodyDef)
+body.createFixture(fixture)
+body.linearDamping = 0f
+body.angularDamping = 0f
+body.userData =  ObjData.BallData(role, vel, ...)
+
+return body
+~~~
+]
+
+---
+
+class: middle
+
+## Взаимодействуем с Java функционально
+
+
+Закодим один раз обход C-style списка:
+
+
+~~~kotlin
+fun forEachBody(world: World, proc: (Body) -> Unit) {
+  // .... //
+}
+~~~
+
+Далее в коде пользуемся как обычной функцией:
+
+~~~
+forEachBody(world) { body -> update(body) }
+~~~
+
+---
+
+class: middle
+
+## Kotlin RT+Libs на Android
+
+.left-column[
+
+
+.image-95[.center[![Pure sine wave](pictures/android-methods-limit.png)]]
+
+]
+
+.right-column[
+
+из отчёта Jake Wharton "Using Kotlin for Android"
+
+.image-95[.center[![Pure sine wave](pictures/kotlin-rt-size.png)]]
+
+### Альтернативы на JVM
+
+.image-95[.center[![Pure sine wave](pictures/alternatives-rt.png)]]
+]
+---
+
+class: middle
+
+## Радужные перспективы
+
+* Разрабатывается в JetBrains
+
+* Поддержка Google
+
+* Вакансии на hh по России, упоминания
+
+    * Haskell - 61  | Scala - 390 | Kotlin - 222
+
+.image-75[.center[![Pure sine wave](pictures/job-segment.png)]]
+
+---
+
+class: middle
+
+.left-column[
+  .image-85[.center[![Pure sine wave](pictures/kotlin-android-1.png)]]
+]
+
+.right-column[
+
+## Поддержка Гугл
+
+
+17 мая 2017
+
+Сегодня команда разработчиков Android с радостью сообщает об официальной поддержке
+языка Kotlin. Это блистательно спроектированный и зрелый язык. Мы уверены в том,
+что Kotlin ускорит разработку под Android и сделает этот процесс гораздо более увлекательным.
+
+]
+
+
+---
+
+class: middle, center
+
+## Приложения на Kotlin
+
+
+.image-85[.center[![Pure sine wave](pictures/kotlin-apps.png)]]
+
+
+---
+
+class: middle
+
+## Android лишь часть
+
+Kotlin ещё умеет
+
+* просто язык общего назначения на JVM (серверы, десктоп)
+
+* JavaScript (пишем клиент и сервер на одном языке)
+
+* Native - можно получить бинарник без VM
+
+---
+
+class: middle
+
+## Книги ссылки
+
+* Kotlin in Action - Dmitry Jemerov and Svetlana Isakova
+
+    Для знакомства с языком
+
+* Kotlin for Android Developers - Antonio Levia
+
+    Для погружения в Android платформу
+
+* И другие: https://kotlinlang.org/docs/books.html
+
+
+
+---
+
+class: middle
+
+## Спасибо за внимание!
+
+~~~
+    github      : anton-k
+
+    email       : anton.kholomiov@gmail.com
+~~~
+
+    </textarea>
+    <script src="remark/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create({
+        ratio: "4:3",
+        highlightLanguage: 'haskell',
+        slideNumberFormat: function (current, total) {
+            return (current != 1) ? (current-1) : '';
+        }
+      });
+    </script>
+  </body>
+</html>
